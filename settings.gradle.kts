@@ -1,1 +1,1 @@
-rootProject.name = "dongne-matjib-api"
+rootProject.name = "wish-map-api"

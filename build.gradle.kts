@@ -8,7 +8,7 @@ plugins {
 
 group = "com.mindbridge"
 version = "0.0.1-SNAPSHOT"
-description = "dongne-matjib-api"
+description = "wish-map-api"
 
 java {
     toolchain {
