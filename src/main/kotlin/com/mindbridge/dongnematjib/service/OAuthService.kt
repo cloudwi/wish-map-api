@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import tools.jackson.databind.json.JsonMapper
 
 @Service
 class OAuthService(
@@ -110,7 +111,7 @@ class OAuthService(
         }
 
         val payload = String(java.util.Base64.getUrlDecoder().decode(parts[1]))
-        val payloadMap = com.fasterxml.jackson.databind.ObjectMapper().readValue(payload, Map::class.java)
+        val payloadMap = JsonMapper.builder().build().readValue(payload, Map::class.java)
 
         val id = payloadMap["sub"]?.toString() 
             ?: throw IllegalArgumentException("Invalid Apple token: missing sub")
