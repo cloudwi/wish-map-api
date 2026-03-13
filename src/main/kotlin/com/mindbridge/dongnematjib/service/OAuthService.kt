@@ -2,7 +2,6 @@ package com.mindbridge.dongnematjib.service
 
 import com.mindbridge.dongnematjib.domain.user.AuthProvider
 import com.mindbridge.dongnematjib.dto.OAuthUserInfo
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -10,10 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import tools.jackson.databind.json.JsonMapper
 
 @Service
-class OAuthService(
-    @Value("\${oauth.google.client-id:}") private val googleClientId: String,
-    @Value("\${oauth.apple.client-id:}") private val appleClientId: String
-) {
+class OAuthService {
     private val webClient = WebClient.builder().build()
 
     fun verifyTokenAndGetUserInfo(provider: AuthProvider, accessToken: String): OAuthUserInfo {
