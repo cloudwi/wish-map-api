@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.domain.user
 
+import com.mindbridge.wishmap.domain.common.BaseTimeEntity
 import jakarta.persistence.*
-import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -9,10 +9,6 @@ import java.time.LocalDateTime
     uniqueConstraints = [UniqueConstraint(columnNames = ["email", "provider"])]
 )
 class User(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
-
     @Column(nullable = false)
     val email: String,
 
@@ -30,11 +26,8 @@ class User(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: UserRole = UserRole.USER,
-
-    @Column(nullable = false, updatable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now()
-)
+    var role: UserRole = UserRole.USER
+) : BaseTimeEntity()
 
 enum class AuthProvider {
     KAKAO, GOOGLE, NAVER, APPLE

@@ -1,16 +1,12 @@
 package com.mindbridge.wishmap.domain.restaurant
 
+import com.mindbridge.wishmap.domain.common.BaseEntity
 import com.mindbridge.wishmap.domain.user.User
 import jakarta.persistence.*
-import java.time.LocalDateTime
 
 @Entity
 @Table(name = "restaurants")
 class Restaurant(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
-
     @Column(nullable = false)
     var name: String,
 
@@ -45,11 +41,6 @@ class Restaurant(
     @JoinColumn(name = "approved_by")
     var approvedBy: User? = null,
 
-    @Column(nullable = false, updatable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
-
-    var updatedAt: LocalDateTime = LocalDateTime.now(),
-
     @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
     val images: MutableList<RestaurantImage> = mutableListOf(),
 
@@ -58,12 +49,7 @@ class Restaurant(
 
     @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
     val bookmarks: MutableList<Bookmark> = mutableListOf()
-) {
-    @PreUpdate
-    fun onUpdate() {
-        updatedAt = LocalDateTime.now()
-    }
-}
+) : BaseEntity()
 
 enum class RestaurantStatus {
     PENDING, APPROVED, REJECTED
