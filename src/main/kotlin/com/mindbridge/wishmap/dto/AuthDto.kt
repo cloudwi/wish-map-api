@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank
 data class SocialLoginRequest(
     @field:NotBlank(message = "Access token is required")
     val accessToken: String,
-    
+
     val nickname: String? = null // Apple 첫 로그인 시 이름 전달용
 )
 
@@ -24,7 +24,6 @@ data class TokenResponse(
 
 data class UserResponse(
     val id: Long,
-    val email: String,
     val nickname: String,
     val profileImage: String?,
     val role: String

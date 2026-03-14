@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails
 
 class UserPrincipal(
     val id: Long,
-    private val email: String,
+    private val nickname: String,
     private val authorities: Collection<GrantedAuthority>
 ) : UserDetails {
 
@@ -15,7 +15,7 @@ class UserPrincipal(
 
     override fun getPassword(): String? = null
 
-    override fun getUsername(): String = email
+    override fun getUsername(): String = nickname
 
     override fun isAccountNonExpired(): Boolean = true
 
@@ -28,7 +28,7 @@ class UserPrincipal(
     companion object {
         fun from(user: User): UserPrincipal {
             val authorities = listOf(SimpleGrantedAuthority("ROLE_${user.role.name}"))
-            return UserPrincipal(user.id, user.email, authorities)
+            return UserPrincipal(user.id, user.nickname, authorities)
         }
     }
 }

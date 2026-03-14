@@ -1,8 +1,11 @@
 package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.user.AuthProvider
+import com.mindbridge.wishmap.domain.user.NicknameGenerator
+import com.mindbridge.wishmap.domain.user.SocialAccount
 import com.mindbridge.wishmap.domain.user.User
 import com.mindbridge.wishmap.dto.*
+import com.mindbridge.wishmap.repository.SocialAccountRepository
 import com.mindbridge.wishmap.repository.UserRepository
 import com.mindbridge.wishmap.security.JwtTokenProvider
 import org.springframework.beans.factory.annotation.Value
@@ -12,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AuthService(
     private val userRepository: UserRepository,
+    private val socialAccountRepository: SocialAccountRepository,
     private val oAuthService: OAuthService,
     private val jwtTokenProvider: JwtTokenProvider,
     @Value("\${jwt.access-token-expiration}") private val accessTokenExpiration: Long
@@ -21,18 +25,31 @@ class AuthService(
     fun socialLogin(provider: AuthProvider, request: SocialLoginRequest): TokenResponse {
         val oAuthUserInfo = oAuthService.verifyTokenAndGetUserInfo(provider, request.accessToken)
 
-        val user = userRepository.findByProviderAndProviderId(provider, oAuthUserInfo.providerId)
-            .orElseGet {
-                // 신규 사용자 생성
-                val newUser = User(
-                    email = oAuthUserInfo.email,
-                    nickname = request.nickname ?: oAuthUserInfo.nickname,
-                    profileImage = oAuthUserInfo.profileImage,
-                    provider = provider,
-                    providerId = oAuthUserInfo.providerId
-                )
-                userRepository.save(newUser)
-            }
+        val socialAccount = socialAccountRepository
+            .findByProviderAndProviderId(provider, oAuthUserInfo.providerId)
+
+        val user = if (socialAccount.isPresent) {
+            socialAccount.get().user
+        } else {
+            // 신규 사용자 생성 + 소셜 계정 연결
+            val nickname = generateUniqueNickname()
+            val newUser = User(
+                nickname = nickname,
+                profileImage = oAuthUserInfo.profileImage
+            )
+            userRepository.save(newUser)
+
+            val newSocialAccount = SocialAccount(
+                user = newUser,
+                provider = provider,
+                providerId = oAuthUserInfo.providerId,
+                email = oAuthUserInfo.email
+            )
+            socialAccountRepository.save(newSocialAccount)
+            newUser.addSocialAccount(newSocialAccount)
+
+            newUser
+        }
 
         return generateTokenResponse(user)
     }
@@ -57,14 +74,24 @@ class AuthService(
         return TokenResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
-            expiresIn = accessTokenExpiration / 1000, // seconds
+            expiresIn = accessTokenExpiration / 1000,
             user = UserResponse(
                 id = user.id,
-                email = user.email,
                 nickname = user.nickname,
                 profileImage = user.profileImage,
                 role = user.role.name
             )
         )
+    }
+
+    private fun generateUniqueNickname(): String {
+        repeat(10) {
+            val nickname = NicknameGenerator.generate()
+            if (!userRepository.existsByNickname(nickname)) {
+                return nickname
+            }
+        }
+        // 충돌이 계속되면 타임스탬프 추가
+        return "${NicknameGenerator.generate()}${System.currentTimeMillis() % 10000}"
     }
 }

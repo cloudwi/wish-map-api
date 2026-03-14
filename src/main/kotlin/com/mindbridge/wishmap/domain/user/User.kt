@@ -4,30 +4,28 @@ import com.mindbridge.wishmap.domain.common.BaseTimeEntity
 import jakarta.persistence.*
 
 @Entity
-@Table(
-    name = "users",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["email", "provider"])]
-)
+@Table(name = "users")
 class User(
-    @Column(nullable = false)
-    val email: String,
-
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     var nickname: String,
 
     var profileImage: String? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val provider: AuthProvider,
+    var role: UserRole = UserRole.USER,
 
-    @Column(nullable = false)
-    val providerId: String,
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val socialAccounts: MutableList<SocialAccount> = mutableListOf()
+) : BaseTimeEntity() {
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var role: UserRole = UserRole.USER
-) : BaseTimeEntity()
+    fun addSocialAccount(socialAccount: SocialAccount) {
+        socialAccounts.add(socialAccount)
+    }
+
+    val primaryEmail: String?
+        get() = socialAccounts.firstOrNull()?.email
+}
 
 enum class AuthProvider {
     KAKAO, GOOGLE, NAVER, APPLE
