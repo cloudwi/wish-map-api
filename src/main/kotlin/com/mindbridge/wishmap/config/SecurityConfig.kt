@@ -32,6 +32,7 @@ class SecurityConfig(
                     // Public endpoints
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/categories").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/actuator/health").permitAll()
                     // Admin endpoints
