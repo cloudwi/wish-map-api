@@ -27,14 +27,21 @@ class RestaurantService(
         maxLng: Double,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        return restaurantRepository.findByStatusAndLocationBounds(
+        val page = restaurantRepository.findByStatusAndLocationBounds(
             RestaurantStatus.APPROVED,
             minLat, maxLat, minLng, maxLng,
             pageable
-        ).map { restaurant ->
-            val likeCount = likeRepository.countByRestaurant(restaurant)
-            restaurant.toListResponse(likeCount)
+        )
+        val likeCountMap = batchLikeCounts(page.content)
+        return page.map { restaurant ->
+            restaurant.toListResponse(likeCountMap[restaurant.id] ?: 0L)
         }
+    }
+
+    private fun batchLikeCounts(restaurants: List<Restaurant>): Map<Long, Long> {
+        if (restaurants.isEmpty()) return emptyMap()
+        return restaurantRepository.countLikesByRestaurants(restaurants)
+            .associate { row -> (row[0] as Long) to (row[1] as Long) }
     }
 
     @Transactional(readOnly = true)
@@ -44,18 +51,10 @@ class RestaurantService(
 
         val likeCount = likeRepository.countByRestaurant(restaurant)
         val commentCount = commentRepository.countByRestaurantAndIsDeletedFalse(restaurant)
-        
-        val isLiked = userId?.let { uid ->
-            userRepository.findById(uid).map { user ->
-                likeRepository.existsByRestaurantAndUser(restaurant, user)
-            }.orElse(false)
-        } ?: false
 
-        val isBookmarked = userId?.let { uid ->
-            userRepository.findById(uid).map { user ->
-                bookmarkRepository.existsByRestaurantAndUser(restaurant, user)
-            }.orElse(false)
-        } ?: false
+        val user = userId?.let { userRepository.findById(it).orElse(null) }
+        val isLiked = user?.let { likeRepository.existsByRestaurantAndUser(restaurant, it) } ?: false
+        val isBookmarked = user?.let { bookmarkRepository.existsByRestaurantAndUser(restaurant, it) } ?: false
 
         return RestaurantDetailResponse(
             id = restaurant.id,
@@ -125,9 +124,10 @@ class RestaurantService(
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
-        return restaurantRepository.findBySuggestedBy(user, pageable).map { restaurant ->
-            val likeCount = likeRepository.countByRestaurant(restaurant)
-            restaurant.toListResponse(likeCount)
+        val page = restaurantRepository.findBySuggestedBy(user, pageable)
+        val likeCountMap = batchLikeCounts(page.content)
+        return page.map { restaurant ->
+            restaurant.toListResponse(likeCountMap[restaurant.id] ?: 0L)
         }
     }
 
@@ -172,9 +172,11 @@ class RestaurantService(
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
-        return bookmarkRepository.findByUser(user, pageable).map { bookmark ->
-            val likeCount = likeRepository.countByRestaurant(bookmark.restaurant)
-            bookmark.restaurant.toListResponse(likeCount)
+        val page = bookmarkRepository.findByUser(user, pageable)
+        val restaurants = page.content.map { it.restaurant }
+        val likeCountMap = batchLikeCounts(restaurants)
+        return page.map { bookmark ->
+            bookmark.restaurant.toListResponse(likeCountMap[bookmark.restaurant.id] ?: 0L)
         }
     }
 }

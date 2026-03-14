@@ -9,8 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient
 import tools.jackson.databind.json.JsonMapper
 
 @Service
-class OAuthService {
-    private val webClient = WebClient.builder().build()
+class OAuthService(
+    private val webClient: WebClient
+) {
 
     fun verifyTokenAndGetUserInfo(provider: AuthProvider, accessToken: String): OAuthUserInfo {
         return when (provider) {
@@ -47,13 +48,25 @@ class OAuthService {
         )
     }
 
-    private fun verifyGoogleToken(accessToken: String): OAuthUserInfo {
-        val response = webClient.get()
-            .uri("https://www.googleapis.com/oauth2/v3/userinfo")
-            .header(HttpHeaders.AUTHORIZATION, "Bearer $accessToken")
-            .retrieve()
-            .bodyToMono(Map::class.java)
-            .block() ?: throw IllegalArgumentException("Failed to get Google user info")
+    private fun verifyGoogleToken(token: String): OAuthUserInfo {
+        // 네이티브 SDK는 idToken(JWT)을, 웹은 accessToken을 보낼 수 있음
+        // idToken인 경우 tokeninfo 엔드포인트로 검증
+        val response = if (token.contains(".")) {
+            // JWT 형태 → idToken
+            webClient.get()
+                .uri("https://oauth2.googleapis.com/tokeninfo?id_token=$token")
+                .retrieve()
+                .bodyToMono(Map::class.java)
+                .block() ?: throw IllegalArgumentException("Failed to verify Google id token")
+        } else {
+            // accessToken
+            webClient.get()
+                .uri("https://www.googleapis.com/oauth2/v3/userinfo")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+                .retrieve()
+                .bodyToMono(Map::class.java)
+                .block() ?: throw IllegalArgumentException("Failed to get Google user info")
+        }
 
         val id = response["sub"].toString()
         val email = response["email"]?.toString() ?: "${id}@google.user"
