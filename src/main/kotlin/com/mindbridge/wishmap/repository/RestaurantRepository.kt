@@ -26,6 +26,22 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
     ): Page<Restaurant>
 
     @Query("""
+        SELECT DISTINCT r FROM Restaurant r
+        LEFT JOIN Visit v ON v.restaurant = r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        WHERE r.lat BETWEEN :minLat AND :maxLat
+        AND r.lng BETWEEN :minLng AND :maxLng
+        AND (r.status = 'APPROVED' OR v.id IS NOT NULL OR c.id IS NOT NULL)
+    """)
+    fun findVisibleByLocationBounds(
+        minLat: Double,
+        maxLat: Double,
+        minLng: Double,
+        maxLng: Double,
+        pageable: Pageable
+    ): Page<Restaurant>
+
+    @Query("""
         SELECT r.id, COUNT(DISTINCT l.likeGroup.user.id) FROM Restaurant r
         LEFT JOIN Like l ON l.restaurant = r
         WHERE r IN :restaurants

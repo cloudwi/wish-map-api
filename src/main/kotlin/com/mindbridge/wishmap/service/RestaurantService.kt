@@ -39,8 +39,7 @@ class RestaurantService(
         maxLng: Double,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        val page = restaurantRepository.findByStatusAndLocationBounds(
-            RestaurantStatus.APPROVED,
+        val page = restaurantRepository.findVisibleByLocationBounds(
             minLat, maxLat, minLng, maxLng,
             pageable
         )
