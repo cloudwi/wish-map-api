@@ -153,6 +153,30 @@ data class ReviewSummary(
     val createdAt: LocalDateTime
 )
 
+data class SuggestRequest(
+    @field:NotBlank(message = "가게 이름은 필수입니다")
+    val name: String,
+
+    @field:NotNull(message = "위도는 필수입니다")
+    val lat: Double,
+
+    @field:NotNull(message = "경도는 필수입니다")
+    val lng: Double,
+
+    val naverPlaceId: String? = null,
+    val category: String? = null,
+
+    @field:Size(max = 2000)
+    val comment: String? = null,
+
+    val imageUrls: List<String> = emptyList()
+)
+
+data class SuggestResponse(
+    val restaurantId: Long,
+    val isNew: Boolean
+)
+
 data class PlaceStatsResponse(
     val restaurantId: Long,
     val visitCount: Long,

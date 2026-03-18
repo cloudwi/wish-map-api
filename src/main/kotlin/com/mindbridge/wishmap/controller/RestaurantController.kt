@@ -66,6 +66,13 @@ class RestaurantController(
     ): ResponseEntity<QuickVisitResponse> =
         ResponseEntity.ok(restaurantService.quickVisit(user.id, request))
 
+    @PostMapping("/suggest")
+    fun suggest(
+        @AuthenticationPrincipal user: UserPrincipal,
+        @Valid @RequestBody request: SuggestRequest
+    ): ResponseEntity<SuggestResponse> =
+        ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.suggest(user.id, request))
+
     @GetMapping("/place-stats")
     fun getPlaceStats(
         @RequestParam naverPlaceId: String

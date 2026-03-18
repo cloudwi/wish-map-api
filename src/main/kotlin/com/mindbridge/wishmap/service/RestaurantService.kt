@@ -344,6 +344,56 @@ class RestaurantService(
         return QuickVisitResponse(restaurantId = restaurant.id, visited = true, isNew = isNew)
     }
 
+    @Transactional
+    fun suggest(userId: Long, request: SuggestRequest): SuggestResponse {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
+
+        var isNew = false
+        val restaurant = if (request.naverPlaceId != null) {
+            restaurantRepository.findByNaverPlaceId(request.naverPlaceId) ?: run {
+                isNew = true
+                restaurantRepository.save(
+                    Restaurant(
+                        name = request.name,
+                        lat = request.lat,
+                        lng = request.lng,
+                        naverPlaceId = request.naverPlaceId,
+                        category = request.category,
+                        suggestedBy = user
+                    )
+                )
+            }
+        } else {
+            isNew = true
+            restaurantRepository.save(
+                Restaurant(
+                    name = request.name,
+                    lat = request.lat,
+                    lng = request.lng,
+                    category = request.category,
+                    suggestedBy = user
+                )
+            )
+        }
+
+        if (!request.comment.isNullOrBlank()) {
+            commentRepository.save(Comment(restaurant = restaurant, user = user, content = request.comment))
+        }
+
+        request.imageUrls.forEachIndexed { index, url ->
+            restaurant.images.add(
+                RestaurantImage(
+                    restaurant = restaurant,
+                    imageUrl = url,
+                    displayOrder = restaurant.images.size + index
+                )
+            )
+        }
+
+        return SuggestResponse(restaurantId = restaurant.id, isNew = isNew)
+    }
+
     @Transactional(readOnly = true)
     fun getPlaceStats(naverPlaceId: String): PlaceStatsResponse {
         val restaurant = restaurantRepository.findByNaverPlaceId(naverPlaceId)
