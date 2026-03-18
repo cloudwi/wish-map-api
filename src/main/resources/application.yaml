@@ -3,6 +3,8 @@ spring:
     name: wish-map-api
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  flyway:
+    enabled: true
   webmvc:
     problemdetails:
       enabled: true
