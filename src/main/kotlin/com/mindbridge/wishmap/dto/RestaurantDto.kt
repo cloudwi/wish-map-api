@@ -1,7 +1,6 @@
 package com.mindbridge.wishmap.dto
 
 import com.mindbridge.wishmap.domain.restaurant.Restaurant
-import com.mindbridge.wishmap.domain.restaurant.RestaurantStatus
 import jakarta.validation.constraints.*
 import java.time.LocalDateTime
 
@@ -41,8 +40,7 @@ data class RestaurantListResponse(
     val category: String?,
     val thumbnailImage: String?,
     val likeCount: Long,
-    val visitCount: Long,
-    val status: RestaurantStatus
+    val visitCount: Long
 )
 
 data class RestaurantDetailResponse(
@@ -55,7 +53,6 @@ data class RestaurantDetailResponse(
     val description: String?,
     val thumbnailImage: String?,
     val images: List<String>,
-    val status: RestaurantStatus,
     val suggestedBy: UserSummary,
     val likeCount: Long,
     val visitCount: Long,
@@ -192,6 +189,5 @@ fun Restaurant.toListResponse(likeCount: Long, visitCount: Long) = RestaurantLis
     category = category,
     thumbnailImage = thumbnailImage,
     likeCount = likeCount,
-    visitCount = visitCount,
-    status = status
+    visitCount = visitCount
 )

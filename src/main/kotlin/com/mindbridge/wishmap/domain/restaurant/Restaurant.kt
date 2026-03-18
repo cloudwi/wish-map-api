@@ -26,17 +26,9 @@ class Restaurant(
 
     var thumbnailImage: String? = null,
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var status: RestaurantStatus = RestaurantStatus.PENDING,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "suggested_by", nullable = false)
     val suggestedBy: User,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
-    var approvedBy: User? = null,
 
     @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
     val images: MutableList<RestaurantImage> = mutableListOf(),
@@ -47,7 +39,3 @@ class Restaurant(
     @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
     val visits: MutableList<Visit> = mutableListOf()
 ) : BaseEntity()
-
-enum class RestaurantStatus {
-    PENDING, APPROVED, REJECTED
-}

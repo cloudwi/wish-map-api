@@ -1,7 +1,11 @@
 package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.comment.Comment
-import com.mindbridge.wishmap.domain.restaurant.*
+import com.mindbridge.wishmap.domain.restaurant.Like
+import com.mindbridge.wishmap.domain.restaurant.LikeGroup
+import com.mindbridge.wishmap.domain.restaurant.Restaurant
+import com.mindbridge.wishmap.domain.restaurant.RestaurantImage
+import com.mindbridge.wishmap.domain.restaurant.Visit
 import com.mindbridge.wishmap.domain.user.User
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
@@ -39,7 +43,7 @@ class RestaurantService(
         maxLng: Double,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        val page = restaurantRepository.findVisibleByLocationBounds(
+        val page = restaurantRepository.findByLocationBounds(
             minLat, maxLat, minLng, maxLng,
             pageable
         )
@@ -111,7 +115,6 @@ class RestaurantService(
             description = restaurant.description,
             thumbnailImage = restaurant.thumbnailImage,
             images = restaurant.images.sortedBy { it.displayOrder }.map { it.imageUrl },
-            status = restaurant.status,
             suggestedBy = UserSummary(
                 id = restaurant.suggestedBy.id,
                 nickname = restaurant.suggestedBy.nickname,
