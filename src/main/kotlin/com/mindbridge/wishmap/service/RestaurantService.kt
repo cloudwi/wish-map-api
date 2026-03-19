@@ -397,7 +397,7 @@ class RestaurantService(
     }
 
     @Transactional(readOnly = true)
-    fun getPlaceStats(naverPlaceId: String): PlaceStatsResponse {
+    fun getPlaceStats(naverPlaceId: String, userId: Long? = null): PlaceStatsResponse {
         val restaurant = restaurantRepository.findByNaverPlaceId(naverPlaceId)
             ?: throw ResourceNotFoundException("Place not found: $naverPlaceId")
 
@@ -406,10 +406,19 @@ class RestaurantService(
         val recentComments = commentRepository
             .findTop3ByRestaurantAndIsDeletedFalseOrderByCreatedAtDesc(restaurant)
 
+        val today = LocalDate.now()
+        val visitedToday = userId?.let { uid ->
+            val user = userRepository.findById(uid).orElse(null)
+            user != null && visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
+                restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
+            )
+        } ?: false
+
         return PlaceStatsResponse(
             restaurantId = restaurant.id,
             visitCount = visitCount,
             avgRating = avgRating,
+            visitedToday = visitedToday,
             recentReviews = recentComments.map { comment ->
                 ReviewSummary(
                     nickname = comment.user.nickname,

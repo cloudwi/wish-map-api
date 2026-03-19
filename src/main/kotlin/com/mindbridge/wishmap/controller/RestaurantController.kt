@@ -75,9 +75,10 @@ class RestaurantController(
 
     @GetMapping("/place-stats")
     fun getPlaceStats(
-        @RequestParam naverPlaceId: String
+        @RequestParam naverPlaceId: String,
+        @AuthenticationPrincipal user: UserPrincipal?
     ): ResponseEntity<PlaceStatsResponse> =
-        ResponseEntity.ok(restaurantService.getPlaceStats(naverPlaceId))
+        ResponseEntity.ok(restaurantService.getPlaceStats(naverPlaceId, user?.id))
 
     // --- 컬렉션 ---
 

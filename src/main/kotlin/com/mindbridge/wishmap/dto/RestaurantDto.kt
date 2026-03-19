@@ -179,6 +179,7 @@ data class PlaceStatsResponse(
     val restaurantId: Long,
     val visitCount: Long,
     val avgRating: Double?,
+    val visitedToday: Boolean,
     val recentReviews: List<ReviewSummary>
 )
 
