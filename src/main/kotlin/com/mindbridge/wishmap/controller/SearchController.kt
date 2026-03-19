@@ -50,4 +50,35 @@ class SearchController(
 
         return ResponseEntity.ok(result)
     }
+
+    @GetMapping("/images")
+    fun searchImages(
+        @RequestParam query: String,
+        @RequestParam(defaultValue = "1") display: Int
+    ): ResponseEntity<Any> {
+        if (clientId.isBlank()) {
+            return ResponseEntity.status(503).body(mapOf("error" to "Search service is not available"))
+        }
+
+        val clampedDisplay = display.coerceIn(1, 5)
+
+        val result = webClient.get()
+            .uri { uriBuilder ->
+                uriBuilder
+                    .scheme("https")
+                    .host("openapi.naver.com")
+                    .path("/v1/search/image")
+                    .queryParam("query", query)
+                    .queryParam("display", clampedDisplay)
+                    .queryParam("sort", "sim")
+                    .build()
+            }
+            .header("X-Naver-Client-Id", clientId)
+            .header("X-Naver-Client-Secret", clientSecret)
+            .retrieve()
+            .bodyToMono(Map::class.java)
+            .block()
+
+        return ResponseEntity.ok(result)
+    }
 }
