@@ -15,8 +15,12 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
+
 import kotlin.math.*
 
 @Service
@@ -49,10 +53,12 @@ class RestaurantService(
         )
         val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
+        val weeklyChampionMap = batchWeeklyChampions(page.content)
         return page.map { restaurant ->
             restaurant.toListResponse(
                 likeCount = likeCountMap[restaurant.id] ?: 0L,
-                visitCount = visitCountMap[restaurant.id] ?: 0L
+                visitCount = visitCountMap[restaurant.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[restaurant.id]
             )
         }
     }
@@ -67,10 +73,12 @@ class RestaurantService(
             minLat, maxLat, minLng, maxLng, memberIds, pageable
         )
         val visitCountMap = batchVisitCounts(page.content)
+        val weeklyChampionMap = batchWeeklyChampions(page.content)
         return page.map { restaurant ->
             restaurant.toListResponse(
                 likeCount = 0L,
-                visitCount = visitCountMap[restaurant.id] ?: 0L
+                visitCount = visitCountMap[restaurant.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[restaurant.id]
             )
         }
     }
@@ -85,6 +93,34 @@ class RestaurantService(
         if (restaurants.isEmpty()) return emptyMap()
         return restaurantRepository.countVisitsByRestaurants(restaurants)
             .associate { row -> (row[0] as Long) to (row[1] as Long) }
+    }
+
+    // 이번 주 월요일~일요일 시간 범위 계산 (한국 시간 기준)
+    private fun getWeekRange(): Pair<LocalDateTime, LocalDateTime> {
+        val koreaZone = ZoneId.of("Asia/Seoul")
+        val today = LocalDate.now(koreaZone)
+        val monday = today.with(DayOfWeek.MONDAY)
+        val nextMonday = monday.plusWeeks(1)
+        return Pair(monday.atStartOfDay(), nextMonday.atStartOfDay())
+    }
+
+    // 모든 식당의 주간 방문왕을 배치로 조회
+    private fun batchWeeklyChampions(restaurants: List<Restaurant>): Map<Long, String> {
+        if (restaurants.isEmpty()) return emptyMap()
+        val (weekStart, weekEnd) = getWeekRange()
+        val results = visitRepository.findAllWeeklyChampions(weekStart, weekEnd)
+
+        // 식당별로 가장 많이 방문한 유저의 닉네임 추출 (첫 번째가 최다 방문자)
+        val championMap = mutableMapOf<Long, String>()
+        for (row in results) {
+            val restaurantId = row[0] as Long
+            val nickname = row[1] as String
+            // 첫 번째로 나오는 것이 최다 방문자 (ORDER BY cnt DESC)
+            if (!championMap.containsKey(restaurantId)) {
+                championMap[restaurantId] = nickname
+            }
+        }
+        return championMap
     }
 
     @Transactional(readOnly = true)
@@ -216,10 +252,12 @@ class RestaurantService(
         val page = restaurantRepository.findBySuggestedBy(user, pageable)
         val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
+        val weeklyChampionMap = batchWeeklyChampions(page.content)
         return page.map { restaurant ->
             restaurant.toListResponse(
                 likeCount = likeCountMap[restaurant.id] ?: 0L,
-                visitCount = visitCountMap[restaurant.id] ?: 0L
+                visitCount = visitCountMap[restaurant.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[restaurant.id]
             )
         }
     }
@@ -445,11 +483,13 @@ class RestaurantService(
         val restaurants = page.content.map { it.restaurant }
         val likeCountMap = batchLikeCounts(restaurants)
         val visitCountMap = batchVisitCounts(restaurants)
+        val weeklyChampionMap = batchWeeklyChampions(restaurants)
 
         return page.map { like ->
             like.restaurant.toListResponse(
                 likeCount = likeCountMap[like.restaurant.id] ?: 0L,
-                visitCount = visitCountMap[like.restaurant.id] ?: 0L
+                visitCount = visitCountMap[like.restaurant.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[like.restaurant.id]
             )
         }
     }
