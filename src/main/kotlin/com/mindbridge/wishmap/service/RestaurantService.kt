@@ -1,6 +1,7 @@
 package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.comment.Comment
+import com.mindbridge.wishmap.domain.comment.CommentImage
 import com.mindbridge.wishmap.domain.restaurant.Like
 import com.mindbridge.wishmap.domain.restaurant.LikeGroup
 import com.mindbridge.wishmap.domain.restaurant.Restaurant
@@ -258,16 +259,6 @@ class RestaurantService(
             suggestedBy = user
         )
 
-        request.imageUrls.forEachIndexed { index, url ->
-            restaurant.images.add(
-                RestaurantImage(
-                    restaurant = restaurant,
-                    imageUrl = url,
-                    displayOrder = index
-                )
-            )
-        }
-
         val saved = restaurantRepository.save(restaurant)
         return getRestaurantDetail(saved.id, userId)
     }
@@ -445,18 +436,16 @@ class RestaurantService(
             )
         }
 
-        if (!request.comment.isNullOrBlank()) {
-            commentRepository.save(Comment(restaurant = restaurant, user = user, content = request.comment))
-        }
-
-        request.imageUrls.forEachIndexed { index, url ->
-            restaurant.images.add(
-                RestaurantImage(
-                    restaurant = restaurant,
-                    imageUrl = url,
-                    displayOrder = restaurant.images.size + index
-                )
+        if (!request.comment.isNullOrBlank() || request.imageUrls.isNotEmpty()) {
+            val comment = Comment(
+                restaurant = restaurant,
+                user = user,
+                content = request.comment ?: ""
             )
+            request.imageUrls.forEachIndexed { index, url ->
+                comment.images.add(CommentImage(comment = comment, imageUrl = url, displayOrder = index))
+            }
+            commentRepository.save(comment)
         }
 
         return SuggestResponse(restaurantId = restaurant.id, isNew = isNew)

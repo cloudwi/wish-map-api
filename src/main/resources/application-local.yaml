@@ -1,22 +1,20 @@
 spring:
   datasource:
-    url: jdbc:h2:file:./data/wishmap;DB_CLOSE_DELAY=-1;AUTO_RECONNECT=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:postgresql://localhost:5432/wishmap
+    driver-class-name: org.postgresql.Driver
+    username: wishmap
+    password: wishmap
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
 
 # local 전용 JWT 시크릿 (개발용)
 jwt:

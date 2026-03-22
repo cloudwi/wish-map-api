@@ -20,7 +20,10 @@ class Comment(
     var content: String,
 
     @Column(nullable = false)
-    var isDeleted: Boolean = false
+    var isDeleted: Boolean = false,
+
+    @OneToMany(mappedBy = "comment", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val images: MutableList<CommentImage> = mutableListOf()
 ) : BaseEntity() {
 
     fun softDelete() {

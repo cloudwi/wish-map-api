@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: wishmap-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: wishmap
+      POSTGRES_USER: wishmap
+      POSTGRES_PASSWORD: wishmap
+    volumes:
+      - wishmap-data:/var/lib/postgresql/data
+
+volumes:
+  wishmap-data:

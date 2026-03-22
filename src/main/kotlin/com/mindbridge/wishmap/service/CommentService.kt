@@ -1,12 +1,14 @@
 package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.comment.Comment
+import com.mindbridge.wishmap.domain.comment.CommentImage
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.CommentRepository
 import com.mindbridge.wishmap.repository.RestaurantRepository
 import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.repository.VisitRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -16,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional
 class CommentService(
     private val commentRepository: CommentRepository,
     private val restaurantRepository: RestaurantRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val visitRepository: VisitRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -24,8 +27,15 @@ class CommentService(
         val restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow { ResourceNotFoundException("Restaurant not found: $restaurantId") }
 
-        return commentRepository.findByRestaurantAndIsDeletedFalse(restaurant, pageable)
-            .map { it.toResponse(currentUserId) }
+        val page = commentRepository.findByRestaurantAndIsDeletedFalse(restaurant, pageable)
+
+        // 유저별 방문 횟수 배치 조회
+        val userIds = page.content.map { it.user }.distinct()
+        val visitCountMap = userIds.associate { user ->
+            user.id to visitRepository.countByRestaurantAndUser(restaurant, user)
+        }
+
+        return page.map { it.toResponse(currentUserId, visitCountMap[it.user.id] ?: 0) }
     }
 
     @Transactional
@@ -41,8 +51,13 @@ class CommentService(
             content = request.content
         )
 
+        request.imageUrls.forEachIndexed { index, url ->
+            comment.images.add(CommentImage(comment = comment, imageUrl = url, displayOrder = index))
+        }
+
         val saved = commentRepository.save(comment)
-        return saved.toResponse(userId)
+        val visitCount = visitRepository.countByRestaurantAndUser(restaurant, user)
+        return saved.toResponse(userId, visitCount)
     }
 
     @Transactional

@@ -16,6 +16,7 @@ interface VisitRepository : JpaRepository<Visit, Long> {
         end: LocalDateTime
     ): Boolean
     fun countByRestaurant(restaurant: Restaurant): Long
+    fun countByRestaurantAndUser(restaurant: Restaurant, user: User): Long
 
     @Query("SELECT AVG(v.rating) FROM Visit v WHERE v.restaurant = :restaurant AND v.rating IS NOT NULL")
     fun findAvgRatingByRestaurant(restaurant: Restaurant): Double?
