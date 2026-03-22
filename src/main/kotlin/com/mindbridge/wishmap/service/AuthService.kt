@@ -5,6 +5,8 @@ import com.mindbridge.wishmap.domain.user.NicknameGenerator
 import com.mindbridge.wishmap.domain.user.SocialAccount
 import com.mindbridge.wishmap.domain.user.User
 import com.mindbridge.wishmap.dto.*
+import com.mindbridge.wishmap.exception.DuplicateResourceException
+import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.SocialAccountRepository
 import com.mindbridge.wishmap.repository.UserRepository
 import com.mindbridge.wishmap.security.JwtTokenProvider
@@ -91,6 +93,25 @@ class AuthService(
                 role = user.role.name
             )
         )
+    }
+
+    @Transactional
+    fun updateNickname(userId: Long, newNickname: String): UserResponse {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
+
+        if (user.nickname == newNickname) {
+            return UserResponse(id = user.id, nickname = user.nickname, profileImage = user.profileImage, role = user.role.name)
+        }
+
+        if (userRepository.existsByNickname(newNickname)) {
+            throw DuplicateResourceException("이미 사용 중인 닉네임입니다")
+        }
+
+        user.nickname = newNickname
+        userRepository.save(user)
+
+        return UserResponse(id = user.id, nickname = user.nickname, profileImage = user.profileImage, role = user.role.name)
     }
 
     private fun generateUniqueNickname(): String {

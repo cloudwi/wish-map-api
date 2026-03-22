@@ -123,7 +123,19 @@ NAVER_SEARCH_CLIENT_ID=xxx NAVER_SEARCH_CLIENT_SECRET=xxx \
 - NAVER_SEARCH_CLIENT_ID, NAVER_SEARCH_CLIENT_SECRET
 - SPRING_PROFILES_ACTIVE=prod
 
+## 디자인 원칙
+- **해외 서비스 스타일의 단순한 UX/UI를 추구** (미니멀, 깔끔, 직관적)
+- API 응답은 필요한 데이터만 포함, 오버페칭 금지
+- 에러 메시지는 사용자 친화적 한국어로
+
 ## 컨벤션
 - 커밋: `feat:`, `fix:` 등 한국어 메시지
 - Co-Authored-By 포함하지 않음
 - 별점 시스템 사용하지 않음 (방문 카운트 기반)
+
+## 알려진 이슈 / TODO
+- **이미지 업로드 미구현**: 맛집 제보 시 이미지를 받을 수 있는 엔드포인트가 없음. Multipart 업로드 + S3/로컬 스토리지 구축 필요
+- **성능 병목 가능 지점**:
+  - `batchWeeklyChampions()`: 주간 방문왕 계산이 매 요청마다 실행됨 → 캐싱(Redis) 또는 배치 처리 고려
+  - `countLikesByRestaurants()`: 대량 데이터 시 N+1 문제 가능 → 인덱스 최적화 필요
+  - 지도 bounds 기반 조회: 사용자 증가 시 공간 인덱스(PostGIS) 도입 고려

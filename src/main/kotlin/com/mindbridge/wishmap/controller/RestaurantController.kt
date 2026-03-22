@@ -20,13 +20,22 @@ class RestaurantController(
 
     @GetMapping
     fun getRestaurants(
-        @RequestParam minLat: Double,
-        @RequestParam maxLat: Double,
-        @RequestParam minLng: Double,
-        @RequestParam maxLng: Double,
-        @PageableDefault(size = 50) pageable: Pageable
-    ): ResponseEntity<Page<RestaurantListResponse>> =
-        ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, pageable))
+        @RequestParam(required = false) minLat: Double?,
+        @RequestParam(required = false) maxLat: Double?,
+        @RequestParam(required = false) minLng: Double?,
+        @RequestParam(required = false) maxLng: Double?,
+        @RequestParam(required = false) category: String?,
+        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) sortBy: String?,
+        @PageableDefault(size = 20) pageable: Pageable
+    ): ResponseEntity<Page<RestaurantListResponse>> {
+        // bounds가 있으면 기존 지도용 API, 없으면 리스트 탭용 필터 API
+        return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
+            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, pageable))
+        } else {
+            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, pageable))
+        }
+    }
 
     @GetMapping("/{id}")
     fun getRestaurantDetail(

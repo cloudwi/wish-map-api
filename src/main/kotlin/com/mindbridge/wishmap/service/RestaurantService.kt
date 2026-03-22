@@ -64,6 +64,34 @@ class RestaurantService(
     }
 
     @Transactional(readOnly = true)
+    fun getRestaurantsWithFilters(
+        category: String?,
+        search: String?,
+        sort: String?,
+        pageable: Pageable
+    ): Page<RestaurantListResponse> {
+        val effectiveCategory = category?.takeIf { it.isNotBlank() }
+        val effectiveSearch = search?.takeIf { it.isNotBlank() }
+
+        val page = if (sort == "visits") {
+            restaurantRepository.findWithFiltersSortByVisits(effectiveCategory, effectiveSearch, pageable)
+        } else {
+            restaurantRepository.findWithFilters(effectiveCategory, effectiveSearch, pageable)
+        }
+
+        val likeCountMap = batchLikeCounts(page.content)
+        val visitCountMap = batchVisitCounts(page.content)
+        val weeklyChampionMap = batchWeeklyChampions(page.content)
+        return page.map { restaurant ->
+            restaurant.toListResponse(
+                likeCount = likeCountMap[restaurant.id] ?: 0L,
+                visitCount = visitCountMap[restaurant.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[restaurant.id]
+            )
+        }
+    }
+
+    @Transactional(readOnly = true)
     fun getRestaurantsByMembers(
         minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
         memberIds: List<Long>, pageable: Pageable

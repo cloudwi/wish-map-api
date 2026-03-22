@@ -54,4 +54,42 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
         memberIds: List<Long>, pageable: Pageable
     ): Page<Restaurant>
+
+    // 필터 + 검색 + 최신순 정렬 (list 탭용)
+    @Query("""
+        SELECT r FROM Restaurant r
+        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
+        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        ORDER BY r.createdAt DESC
+    """,
+    countQuery = """
+        SELECT COUNT(r) FROM Restaurant r
+        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
+        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+    """)
+    fun findWithFilters(
+        category: String?,
+        search: String?,
+        pageable: Pageable
+    ): Page<Restaurant>
+
+    // 필터 + 검색 + 방문 수 정렬 (list 탭용)
+    @Query("""
+        SELECT r FROM Restaurant r
+        LEFT JOIN Visit v ON v.restaurant = r
+        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
+        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        GROUP BY r
+        ORDER BY COUNT(v) DESC, r.createdAt DESC
+    """,
+    countQuery = """
+        SELECT COUNT(r) FROM Restaurant r
+        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
+        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+    """)
+    fun findWithFiltersSortByVisits(
+        category: String?,
+        search: String?,
+        pageable: Pageable
+    ): Page<Restaurant>
 }

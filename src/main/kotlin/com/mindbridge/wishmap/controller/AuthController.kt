@@ -1,12 +1,12 @@
 package com.mindbridge.wishmap.controller
 
 import com.mindbridge.wishmap.domain.user.AuthProvider
-import com.mindbridge.wishmap.dto.RefreshTokenRequest
-import com.mindbridge.wishmap.dto.SocialLoginRequest
-import com.mindbridge.wishmap.dto.TokenResponse
+import com.mindbridge.wishmap.dto.*
+import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -38,4 +38,10 @@ class AuthController(
         return ResponseEntity.ok(response)
     }
 
+    @PatchMapping("/me/nickname")
+    fun updateNickname(
+        @AuthenticationPrincipal user: UserPrincipal,
+        @Valid @RequestBody request: UpdateNicknameRequest
+    ): ResponseEntity<UserResponse> =
+        ResponseEntity.ok(authService.updateNickname(user.id, request.nickname.trim()))
 }

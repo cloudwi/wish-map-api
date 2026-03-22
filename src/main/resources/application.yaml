@@ -21,6 +21,17 @@ naver:
     client-id: ${NAVER_SEARCH_CLIENT_ID:}
     client-secret: ${NAVER_SEARCH_CLIENT_SECRET:}
 
+# Supabase Storage (이미지 업로드)
+supabase:
+  url: ${SUPABASE_URL:https://bzlufgaifypdixrmvmga.supabase.co}
+  key: ${SUPABASE_KEY:}
+  bucket: restaurant-images
+
+# Multipart 파일 업로드 설정
+spring.servlet.multipart:
+  max-file-size: 5MB
+  max-request-size: 25MB
+
 # OAuth 설정
 oauth:
   kakao:
