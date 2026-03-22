@@ -1,6 +1,7 @@
 package com.mindbridge.wishmap.dto
 
 import com.mindbridge.wishmap.domain.group.GroupRole
+import com.mindbridge.wishmap.domain.group.MemberStatus
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
@@ -16,7 +17,12 @@ data class GroupResponse(
     val leaderId: Long,
     val leaderNickname: String,
     val memberCount: Int,
-    val isLeader: Boolean
+    val pendingCount: Int,
+    val isLeader: Boolean,
+    val baseLat: Double? = null,
+    val baseLng: Double? = null,
+    val baseAddress: String? = null,
+    val baseRadius: Int? = null
 )
 
 data class GroupDetailResponse(
@@ -33,6 +39,7 @@ data class GroupMemberResponse(
     val nickname: String,
     val profileImage: String?,
     val role: GroupRole,
+    val status: MemberStatus,
     val joinedAt: String
 )
 
@@ -42,4 +49,19 @@ data class InviteMemberRequest(
 
 data class TransferLeaderRequest(
     val newLeaderId: Long
+)
+
+data class UpdateGroupLocationRequest(
+    val baseLat: Double,
+    val baseLng: Double,
+    val baseAddress: String,
+    val baseRadius: Int
+)
+
+data class GroupInviteResponse(
+    val groupId: Long,
+    val groupName: String,
+    val leaderNickname: String,
+    val memberCount: Int,
+    val invitedAt: String
 )

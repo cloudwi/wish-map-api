@@ -77,6 +77,40 @@ class GroupController(
         return ResponseEntity.noContent().build()
     }
 
+    @GetMapping("/invites")
+    fun getPendingInvites(
+        @AuthenticationPrincipal user: UserPrincipal
+    ): ResponseEntity<List<GroupInviteResponse>> =
+        ResponseEntity.ok(groupService.getPendingInvites(user.id))
+
+    @PatchMapping("/{id}/invites/accept")
+    fun acceptInvite(
+        @AuthenticationPrincipal user: UserPrincipal,
+        @PathVariable id: Long
+    ): ResponseEntity<Void> {
+        groupService.acceptInvite(user.id, id)
+        return ResponseEntity.ok().build()
+    }
+
+    @PatchMapping("/{id}/invites/reject")
+    fun rejectInvite(
+        @AuthenticationPrincipal user: UserPrincipal,
+        @PathVariable id: Long
+    ): ResponseEntity<Void> {
+        groupService.rejectInvite(user.id, id)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PatchMapping("/{id}/location")
+    fun updateGroupLocation(
+        @AuthenticationPrincipal user: UserPrincipal,
+        @PathVariable id: Long,
+        @Valid @RequestBody request: UpdateGroupLocationRequest
+    ): ResponseEntity<Void> {
+        groupService.updateGroupLocation(user.id, id, request)
+        return ResponseEntity.ok().build()
+    }
+
     // 그룹 필터: 그룹 구성원이 방문/제보한 맛집만 조회
     @GetMapping("/{id}/restaurants")
     fun getGroupRestaurants(

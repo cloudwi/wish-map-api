@@ -1,5 +1,6 @@
 package com.mindbridge.wishmap.service
 
+import com.mindbridge.wishmap.domain.notification.NotificationType
 import com.mindbridge.wishmap.domain.user.Friend
 import com.mindbridge.wishmap.domain.user.FriendStatus
 import com.mindbridge.wishmap.dto.FriendResponse
@@ -15,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class FriendService(
     private val friendRepository: FriendRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val notificationService: NotificationService
 ) {
 
     fun searchUsers(query: String, currentUserId: Long): List<UserSearchResult> {
@@ -48,6 +50,13 @@ class FriendService(
         val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("사용자를 찾을 수 없습니다") }
 
         val friend = friendRepository.save(Friend(requester = requester, receiver = receiver))
+        notificationService.createNotification(
+            userId = receiverId,
+            type = NotificationType.FRIEND_REQUEST,
+            title = "친구 요청",
+            message = "${requester.nickname}님이 친구 요청을 보냈습니다",
+            referenceId = friend.id
+        )
         return friend.toResponse(currentUserId = requesterId)
     }
 

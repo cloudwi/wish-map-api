@@ -3,6 +3,8 @@ package com.mindbridge.wishmap.service
 import com.mindbridge.wishmap.domain.group.Group
 import com.mindbridge.wishmap.domain.group.GroupMember
 import com.mindbridge.wishmap.domain.group.GroupRole
+import com.mindbridge.wishmap.domain.group.MemberStatus
+import com.mindbridge.wishmap.domain.notification.NotificationType
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ForbiddenException
@@ -17,14 +19,16 @@ import org.springframework.transaction.annotation.Transactional
 class GroupService(
     private val groupRepository: GroupRepository,
     private val groupMemberRepository: GroupMemberRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val notificationService: NotificationService
 ) {
 
     @Transactional(readOnly = true)
     fun getMyGroups(userId: Long): List<GroupResponse> {
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found") }
-        return groupRepository.findAllByMember(user).map { it.toResponse(userId) }
+        return groupRepository.findAllByMemberAndStatus(user, MemberStatus.ACCEPTED)
+            .map { it.toResponse(userId) }
     }
 
     @Transactional
@@ -32,7 +36,7 @@ class GroupService(
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found") }
         val group = groupRepository.save(Group(name = request.name, leader = user))
-        val member = GroupMember(group = group, user = user, role = GroupRole.LEADER)
+        val member = GroupMember(group = group, user = user, role = GroupRole.LEADER, status = MemberStatus.ACCEPTED)
         groupMemberRepository.save(member)
         group.members.add(member)
         return group.toResponse(userId)
@@ -59,6 +63,7 @@ class GroupService(
                     nickname = m.user.nickname,
                     profileImage = m.user.profileImage,
                     role = m.role,
+                    status = m.status,
                     joinedAt = m.createdAt.toString()
                 )
             }
@@ -77,17 +82,70 @@ class GroupService(
         val target = userRepository.findByNickname(nickname)
             ?: throw ResourceNotFoundException("'$nickname' 사용자를 찾을 수 없습니다")
         if (groupMemberRepository.existsByGroupAndUser(group, target)) {
-            throw DuplicateResourceException("이미 그룹에 속한 사용자입니다")
+            throw DuplicateResourceException("이미 그룹에 속하거나 초대된 사용자입니다")
         }
-        val member = groupMemberRepository.save(GroupMember(group = group, user = target))
+        val member = groupMemberRepository.save(
+            GroupMember(group = group, user = target, status = MemberStatus.PENDING)
+        )
+        notificationService.createNotification(
+            userId = target.id,
+            type = NotificationType.GROUP_INVITE,
+            title = group.name,
+            message = "${group.name} 그룹에 초대되었습니다",
+            referenceId = groupId
+        )
         return GroupMemberResponse(
             id = member.id,
             userId = target.id,
             nickname = target.nickname,
             profileImage = target.profileImage,
             role = member.role,
+            status = member.status,
             joinedAt = member.createdAt.toString()
         )
+    }
+
+    @Transactional(readOnly = true)
+    fun getPendingInvites(userId: Long): List<GroupInviteResponse> {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found") }
+        return groupMemberRepository.findAllByUserAndStatus(user, MemberStatus.PENDING).map { m ->
+            GroupInviteResponse(
+                groupId = m.group.id,
+                groupName = m.group.name,
+                leaderNickname = m.group.leader.nickname,
+                memberCount = groupMemberRepository.countAcceptedMembers(m.group),
+                invitedAt = m.createdAt.toString()
+            )
+        }
+    }
+
+    @Transactional
+    fun acceptInvite(userId: Long, groupId: Long) {
+        val group = groupRepository.findById(groupId)
+            .orElseThrow { ResourceNotFoundException("Group not found") }
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found") }
+        val member = groupMemberRepository.findByGroupAndUser(group, user)
+            ?: throw ResourceNotFoundException("초대를 찾을 수 없습니다")
+        if (member.status != MemberStatus.PENDING) {
+            throw IllegalArgumentException("대기 중인 초대가 아닙니다")
+        }
+        member.status = MemberStatus.ACCEPTED
+    }
+
+    @Transactional
+    fun rejectInvite(userId: Long, groupId: Long) {
+        val group = groupRepository.findById(groupId)
+            .orElseThrow { ResourceNotFoundException("Group not found") }
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found") }
+        val member = groupMemberRepository.findByGroupAndUser(group, user)
+            ?: throw ResourceNotFoundException("초대를 찾을 수 없습니다")
+        if (member.status != MemberStatus.PENDING) {
+            throw IllegalArgumentException("대기 중인 초대가 아닙니다")
+        }
+        groupMemberRepository.delete(member)
     }
 
     @Transactional
@@ -118,6 +176,9 @@ class GroupService(
             .orElseThrow { ResourceNotFoundException("User not found") }
         val newLeaderMember = groupMemberRepository.findByGroupAndUser(group, newLeader)
             ?: throw ResourceNotFoundException("그룹 구성원이 아닙니다")
+        if (newLeaderMember.status != MemberStatus.ACCEPTED) {
+            throw IllegalArgumentException("수락된 구성원만 그룹장이 될 수 있습니다")
+        }
         val oldLeaderMember = groupMemberRepository.findByGroupAndUser(group, group.leader)!!
         oldLeaderMember.role = GroupRole.MEMBER
         newLeaderMember.role = GroupRole.LEADER
@@ -138,15 +199,41 @@ class GroupService(
         groupMemberRepository.delete(member)
     }
 
+    @Transactional
+    fun updateGroupLocation(userId: Long, groupId: Long, request: UpdateGroupLocationRequest) {
+        val group = groupRepository.findById(groupId)
+            .orElseThrow { ResourceNotFoundException("Group not found") }
+        if (group.leader.id != userId) {
+            throw ForbiddenException("그룹장만 위치를 설정할 수 있습니다")
+        }
+        group.baseLat = request.baseLat
+        group.baseLng = request.baseLng
+        group.baseAddress = request.baseAddress
+        group.baseRadius = request.baseRadius
+
+        notificationService.notifyGroupMembers(
+            groupId = groupId,
+            excludeUserId = userId,
+            type = NotificationType.GROUP_LOCATION_CHANGED,
+            title = group.name,
+            message = "그룹 위치가 ${request.baseAddress}(으)로 변경되었습니다"
+        )
+    }
+
     fun getGroupMemberIds(groupId: Long): List<Long> =
-        groupMemberRepository.findUserIdsByGroupId(groupId)
+        groupMemberRepository.findAcceptedUserIdsByGroupId(groupId)
 
     private fun Group.toResponse(userId: Long) = GroupResponse(
         id = id,
         name = name,
         leaderId = leader.id,
         leaderNickname = leader.nickname,
-        memberCount = members.size,
-        isLeader = leader.id == userId
+        memberCount = groupMemberRepository.countAcceptedMembers(this),
+        pendingCount = groupMemberRepository.countPendingMembers(this),
+        isLeader = leader.id == userId,
+        baseLat = baseLat,
+        baseLng = baseLng,
+        baseAddress = baseAddress,
+        baseRadius = baseRadius
     )
 }

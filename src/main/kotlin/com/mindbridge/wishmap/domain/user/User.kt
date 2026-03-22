@@ -11,6 +11,9 @@ class User(
 
     var profileImage: String? = null,
 
+    @Column(name = "push_token")
+    var pushToken: String? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var role: UserRole = UserRole.USER,

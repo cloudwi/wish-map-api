@@ -44,4 +44,13 @@ class AuthController(
         @Valid @RequestBody request: UpdateNicknameRequest
     ): ResponseEntity<UserResponse> =
         ResponseEntity.ok(authService.updateNickname(user.id, request.nickname.trim()))
+
+    @PatchMapping("/me/push-token")
+    fun updatePushToken(
+        @AuthenticationPrincipal user: UserPrincipal,
+        @RequestBody request: UpdatePushTokenRequest
+    ): ResponseEntity<Void> {
+        authService.updatePushToken(user.id, request.pushToken)
+        return ResponseEntity.ok().build()
+    }
 }

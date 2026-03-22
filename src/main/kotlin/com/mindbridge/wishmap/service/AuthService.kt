@@ -114,6 +114,14 @@ class AuthService(
         return UserResponse(id = user.id, nickname = user.nickname, profileImage = user.profileImage, role = user.role.name)
     }
 
+    @Transactional
+    fun updatePushToken(userId: Long, pushToken: String) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
+        user.pushToken = pushToken
+        userRepository.save(user)
+    }
+
     private fun generateUniqueNickname(): String {
         repeat(10) {
             val nickname = NicknameGenerator.generate()

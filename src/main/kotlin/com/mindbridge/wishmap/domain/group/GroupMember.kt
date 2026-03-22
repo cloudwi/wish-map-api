@@ -20,9 +20,17 @@ class GroupMember(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: GroupRole = GroupRole.MEMBER
+    var role: GroupRole = GroupRole.MEMBER,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: MemberStatus = MemberStatus.ACCEPTED
 ) : BaseTimeEntity()
 
 enum class GroupRole {
     LEADER, MEMBER
+}
+
+enum class MemberStatus {
+    PENDING, ACCEPTED
 }
