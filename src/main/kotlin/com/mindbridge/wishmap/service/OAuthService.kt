@@ -2,16 +2,26 @@ package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.user.AuthProvider
 import com.mindbridge.wishmap.dto.OAuthUserInfo
+import com.nimbusds.jose.crypto.RSASSAVerifier
+import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.jose.jwk.RSAKey
+import com.nimbusds.jwt.SignedJWT
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import tools.jackson.databind.json.JsonMapper
+import java.net.URI
+import java.util.*
 
 @Service
 class OAuthService(
-    private val webClient: WebClient
+    private val webClient: WebClient,
+    @Value("\${oauth.apple.client-id:}") private val appleClientId: String
 ) {
+
+    private val log = LoggerFactory.getLogger(OAuthService::class.java)
 
     fun verifyTokenAndGetUserInfo(provider: AuthProvider, accessToken: String): OAuthUserInfo {
         return when (provider) {
@@ -110,21 +120,46 @@ class OAuthService(
     }
 
     private fun verifyAppleToken(identityToken: String): OAuthUserInfo {
-        // Apple uses identity token (JWT) instead of access token
-        // Decode the JWT to get user info (without full verification for simplicity)
-        // In production, you should verify the JWT signature with Apple's public keys
-        
-        val parts = identityToken.split(".")
-        if (parts.size != 3) {
-            throw IllegalArgumentException("Invalid Apple identity token")
+        val signedJWT = try {
+            SignedJWT.parse(identityToken)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid Apple identity token format", e)
         }
 
-        val payload = String(java.util.Base64.getUrlDecoder().decode(parts[1]))
-        val payloadMap = JsonMapper.builder().build().readValue(payload, Map::class.java)
+        // Apple JWKS에서 공개키 가져오기
+        val jwkSet = JWKSet.load(URI("https://appleid.apple.com/auth/keys").toURL())
+        val kid = signedJWT.header.keyID
+            ?: throw IllegalArgumentException("Apple token missing kid header")
 
-        val id = payloadMap["sub"]?.toString() 
+        val jwk = jwkSet.getKeyByKeyId(kid)
+            ?: throw IllegalArgumentException("Apple public key not found for kid: $kid")
+
+        // 서명 검증
+        val verifier = RSASSAVerifier(jwk as RSAKey)
+        if (!signedJWT.verify(verifier)) {
+            throw IllegalArgumentException("Apple token signature verification failed")
+        }
+
+        val claims = signedJWT.jwtClaimsSet
+
+        // issuer 검증
+        if (claims.issuer != "https://appleid.apple.com") {
+            throw IllegalArgumentException("Invalid Apple token issuer: ${claims.issuer}")
+        }
+
+        // audience 검증
+        if (appleClientId.isNotBlank() && !claims.audience.contains(appleClientId)) {
+            throw IllegalArgumentException("Apple token audience mismatch")
+        }
+
+        // 만료 검증
+        if (claims.expirationTime?.before(Date()) == true) {
+            throw IllegalArgumentException("Apple token has expired")
+        }
+
+        val id = claims.subject
             ?: throw IllegalArgumentException("Invalid Apple token: missing sub")
-        val email = payloadMap["email"]?.toString() ?: "${id}@apple.user"
+        val email = claims.getStringClaim("email") ?: "${id}@apple.user"
 
         return OAuthUserInfo(
             provider = AuthProvider.APPLE,
@@ -133,5 +168,12 @@ class OAuthService(
             nickname = "Apple 사용자",
             profileImage = null
         )
+    }
+
+    fun revokeAppleToken(refreshToken: String) {
+        // TODO: .p8 키 파일 설정 후 실제 해지 구현
+        // Apple의 https://appleid.apple.com/auth/revoke 엔드포인트 호출 필요
+        // client_secret은 .p8 키로 생성한 JWT (ES256)
+        log.warn("Apple 토큰 해지 미구현 - .p8 키 설정 필요. refreshToken 길이: {}", refreshToken.length)
     }
 }

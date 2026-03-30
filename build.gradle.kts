@@ -39,6 +39,9 @@ dependencies {
     
     // HTTP Client (for OAuth token verification)
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // Apple Sign-In JWT verification
+    implementation("com.nimbusds:nimbus-jose-jwt:10.3")
     
     // Database
     runtimeOnly("com.h2database:h2")

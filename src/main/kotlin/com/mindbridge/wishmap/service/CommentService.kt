@@ -5,6 +5,7 @@ import com.mindbridge.wishmap.domain.comment.CommentImage
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.repository.BlockedUserRepository
 import com.mindbridge.wishmap.repository.CommentRepository
 import com.mindbridge.wishmap.repository.RestaurantRepository
 import com.mindbridge.wishmap.repository.UserRepository
@@ -19,7 +20,8 @@ class CommentService(
     private val commentRepository: CommentRepository,
     private val restaurantRepository: RestaurantRepository,
     private val userRepository: UserRepository,
-    private val visitRepository: VisitRepository
+    private val visitRepository: VisitRepository,
+    private val blockedUserRepository: BlockedUserRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -29,13 +31,21 @@ class CommentService(
 
         val page = commentRepository.findByRestaurantAndIsDeletedFalse(restaurant, pageable)
 
+        // 차단한 유저의 댓글 필터링
+        val blockedIds = if (currentUserId != null) {
+            blockedUserRepository.findBlockedUserIds(currentUserId).toSet()
+        } else emptySet()
+
+        val filtered = page.content.filter { it.user.id !in blockedIds }
+
         // 유저별 방문 횟수 배치 조회
-        val userIds = page.content.map { it.user }.distinct()
+        val userIds = filtered.map { it.user }.distinct()
         val visitCountMap = userIds.associate { user ->
             user.id to visitRepository.countByRestaurantAndUser(restaurant, user)
         }
 
-        return page.map { it.toResponse(currentUserId, visitCountMap[it.user.id] ?: 0) }
+        val responses = filtered.map { it.toResponse(currentUserId, visitCountMap[it.user.id] ?: 0) }
+        return org.springframework.data.domain.PageImpl(responses, pageable, page.totalElements)
     }
 
     @Transactional

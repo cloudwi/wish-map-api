@@ -3,6 +3,7 @@ package com.mindbridge.wishmap.repository
 import com.mindbridge.wishmap.domain.user.Friend
 import com.mindbridge.wishmap.domain.user.FriendStatus
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
 interface FriendRepository : JpaRepository<Friend, Long> {
@@ -31,4 +32,8 @@ interface FriendRepository : JpaRepository<Friend, Long> {
     fun findBetween(userId: Long, otherId: Long): Friend?
 
     fun existsByRequesterIdAndReceiverId(requesterId: Long, receiverId: Long): Boolean
+
+    @Modifying
+    @Query("DELETE FROM Friend f WHERE f.requester.id = :userId OR f.receiver.id = :userId")
+    fun deleteAllByUserId(userId: Long)
 }

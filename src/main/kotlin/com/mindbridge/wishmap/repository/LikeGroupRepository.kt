@@ -9,4 +9,5 @@ interface LikeGroupRepository : JpaRepository<LikeGroup, Long> {
     fun findByUser(user: User): List<LikeGroup>
     fun findByUserAndName(user: User, name: String): Optional<LikeGroup>
     fun existsByUserAndName(user: User, name: String): Boolean
+    fun deleteAllByUser(user: User)
 }

@@ -29,8 +29,9 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
-                    // 인증
-                    .requestMatchers("/api/v1/auth/**").permitAll()
+                    // 인증 (DELETE /auth/me는 인증 필요하므로 제외)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/**").authenticated()
 
                     // 공개 조회 API
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants").permitAll()

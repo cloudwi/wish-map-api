@@ -26,4 +26,6 @@ interface GroupMemberRepository : JpaRepository<GroupMember, Long> {
 
     @Query("SELECT COUNT(m) FROM GroupMember m WHERE m.group = :group AND m.status = 'PENDING'")
     fun countPendingMembers(group: Group): Int
+
+    fun deleteAllByUser(user: User)
 }

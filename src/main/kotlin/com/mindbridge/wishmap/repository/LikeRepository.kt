@@ -18,4 +18,5 @@ interface LikeRepository : JpaRepository<Like, Long> {
     fun countDistinctUsersByRestaurant(restaurant: Restaurant): Long
 
     fun countByRestaurant(restaurant: Restaurant): Long
+    fun deleteAllByLikeGroupIn(likeGroups: List<LikeGroup>)
 }

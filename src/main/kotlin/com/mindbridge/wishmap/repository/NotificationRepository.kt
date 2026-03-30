@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface NotificationRepository : JpaRepository<Notification, Long> {
     fun findByUserIdOrderByCreatedAtDesc(userId: Long, pageable: Pageable): Page<Notification>
     fun countByUserIdAndIsReadFalse(userId: Long): Long
+    fun deleteAllByUserId(userId: Long)
 }

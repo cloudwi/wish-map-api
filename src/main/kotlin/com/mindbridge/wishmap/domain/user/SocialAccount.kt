@@ -21,5 +21,8 @@ class SocialAccount(
     val providerId: String,
 
     @Column(nullable = false)
-    val email: String
+    val email: String,
+
+    @Column(name = "refresh_token")
+    var refreshToken: String? = null
 ) : BaseTimeEntity()

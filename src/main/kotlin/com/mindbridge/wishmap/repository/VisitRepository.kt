@@ -4,6 +4,7 @@ import com.mindbridge.wishmap.domain.restaurant.Restaurant
 import com.mindbridge.wishmap.domain.restaurant.Visit
 import com.mindbridge.wishmap.domain.user.User
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
@@ -50,4 +51,6 @@ interface VisitRepository : JpaRepository<Visit, Long> {
         weekStart: LocalDateTime,
         weekEnd: LocalDateTime
     ): List<Array<Any>>
+
+    fun deleteAllByUser(user: User)
 }

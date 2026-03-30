@@ -53,4 +53,12 @@ class AuthController(
         authService.updatePushToken(user.id, request.pushToken)
         return ResponseEntity.ok().build()
     }
+
+    @DeleteMapping("/me")
+    fun deleteAccount(
+        @AuthenticationPrincipal user: UserPrincipal
+    ): ResponseEntity<Void> {
+        authService.deleteAccount(user.id)
+        return ResponseEntity.noContent().build()
+    }
 }
