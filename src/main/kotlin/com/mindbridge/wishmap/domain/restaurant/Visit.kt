@@ -16,5 +16,9 @@ class Visit(
     val user: User,
 
     @Column
-    var rating: Int? = null
+    var rating: Int? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "price_range", nullable = false)
+    var priceRange: PriceRange = PriceRange.RANGE_10K
 ) : BaseTimeEntity()

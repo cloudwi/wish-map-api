@@ -4,6 +4,7 @@ import com.mindbridge.wishmap.domain.comment.Comment
 import com.mindbridge.wishmap.domain.comment.CommentImage
 import com.mindbridge.wishmap.domain.restaurant.Like
 import com.mindbridge.wishmap.domain.restaurant.LikeGroup
+import com.mindbridge.wishmap.domain.restaurant.PriceRange
 import com.mindbridge.wishmap.domain.restaurant.Restaurant
 import com.mindbridge.wishmap.domain.restaurant.RestaurantImage
 import com.mindbridge.wishmap.domain.restaurant.Visit
@@ -46,12 +47,14 @@ class RestaurantService(
         maxLat: Double,
         minLng: Double,
         maxLng: Double,
+        priceRange: PriceRange?,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        val page = restaurantRepository.findByLocationBounds(
-            minLat, maxLat, minLng, maxLng,
-            pageable
-        )
+        val page = if (priceRange != null) {
+            restaurantRepository.findByLocationBoundsAndPriceRange(minLat, maxLat, minLng, maxLng, priceRange, pageable)
+        } else {
+            restaurantRepository.findByLocationBounds(minLat, maxLat, minLng, maxLng, pageable)
+        }
         val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
@@ -69,15 +72,24 @@ class RestaurantService(
         category: String?,
         search: String?,
         sort: String?,
+        priceRange: PriceRange?,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
         val effectiveCategory = category?.takeIf { it.isNotBlank() }
         val effectiveSearch = search?.takeIf { it.isNotBlank() }
 
         val page = if (sort == "visits") {
-            restaurantRepository.findWithFiltersSortByVisits(effectiveCategory, effectiveSearch, pageable)
+            if (priceRange != null) {
+                restaurantRepository.findWithFiltersSortByVisitsAndPriceRange(effectiveCategory, effectiveSearch, priceRange, pageable)
+            } else {
+                restaurantRepository.findWithFiltersSortByVisits(effectiveCategory, effectiveSearch, pageable)
+            }
         } else {
-            restaurantRepository.findWithFilters(effectiveCategory, effectiveSearch, pageable)
+            if (priceRange != null) {
+                restaurantRepository.findWithFiltersAndPriceRange(effectiveCategory, effectiveSearch, priceRange, pageable)
+            } else {
+                restaurantRepository.findWithFilters(effectiveCategory, effectiveSearch, pageable)
+            }
         }
 
         val likeCountMap = batchLikeCounts(page.content)
@@ -95,12 +107,14 @@ class RestaurantService(
     @Transactional(readOnly = true)
     fun getRestaurantsByMembers(
         minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
-        memberIds: List<Long>, pageable: Pageable
+        memberIds: List<Long>, priceRange: PriceRange?, pageable: Pageable
     ): Page<RestaurantListResponse> {
         if (memberIds.isEmpty()) return Page.empty()
-        val page = restaurantRepository.findByLocationBoundsAndMembers(
-            minLat, maxLat, minLng, maxLng, memberIds, pageable
-        )
+        val page = if (priceRange != null) {
+            restaurantRepository.findByLocationBoundsAndMembersAndPriceRange(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
+        } else {
+            restaurantRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, pageable)
+        }
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         return page.map { restaurant ->
@@ -190,6 +204,7 @@ class RestaurantService(
             commentCount = commentCount,
             isLiked = isLiked,
             isVisited = isVisited,
+            priceRange = restaurant.priceRange.name,
             createdAt = restaurant.createdAt,
             updatedAt = restaurant.updatedAt
         )
@@ -214,7 +229,7 @@ class RestaurantService(
             throw IllegalArgumentException("맛집에서 100m 이내에서만 방문 인증이 가능합니다")
         }
 
-        visitRepository.save(Visit(restaurant = restaurant, user = user))
+        visitRepository.save(Visit(restaurant = restaurant, user = user, priceRange = restaurant.priceRange))
         return true
     }
 
@@ -226,6 +241,7 @@ class RestaurantService(
                 lng = request.lng,
                 naverPlaceId = request.naverPlaceId,
                 category = request.category,
+                priceRange = request.priceRange,
                 suggestedBy = user
             )
         )
@@ -394,48 +410,10 @@ class RestaurantService(
             throw DuplicateResourceException("오늘 이미 방문 인증한 맛집입니다")
         }
 
-        visitRepository.save(Visit(restaurant = restaurant, user = user, rating = request.rating))
+        val visit = Visit(restaurant = restaurant, user = user, rating = request.rating, priceRange = request.priceRange)
+        visitRepository.save(visit)
 
-        if (!request.comment.isNullOrBlank()) {
-            commentRepository.save(Comment(restaurant = restaurant, user = user, content = request.comment))
-        }
-
-        return QuickVisitResponse(restaurantId = restaurant.id, visited = true, isNew = isNew)
-    }
-
-    @Transactional
-    fun suggest(userId: Long, request: SuggestRequest): SuggestResponse {
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        var isNew = false
-        val restaurant = if (request.naverPlaceId != null) {
-            restaurantRepository.findByNaverPlaceId(request.naverPlaceId) ?: run {
-                isNew = true
-                restaurantRepository.save(
-                    Restaurant(
-                        name = request.name,
-                        lat = request.lat,
-                        lng = request.lng,
-                        naverPlaceId = request.naverPlaceId,
-                        category = request.category,
-                        suggestedBy = user
-                    )
-                )
-            }
-        } else {
-            isNew = true
-            restaurantRepository.save(
-                Restaurant(
-                    name = request.name,
-                    lat = request.lat,
-                    lng = request.lng,
-                    category = request.category,
-                    suggestedBy = user
-                )
-            )
-        }
-
+        // 리뷰 (한줄평 + 이미지) 처리
         if (!request.comment.isNullOrBlank() || request.imageUrls.isNotEmpty()) {
             val comment = Comment(
                 restaurant = restaurant,
@@ -448,7 +426,19 @@ class RestaurantService(
             commentRepository.save(comment)
         }
 
-        return SuggestResponse(restaurantId = restaurant.id, isNew = isNew)
+        // 가격대 캐시 업데이트
+        updateCachedPriceRange(restaurant)
+
+        return QuickVisitResponse(restaurantId = restaurant.id, visited = true, isNew = isNew)
+    }
+
+    private fun updateCachedPriceRange(restaurant: Restaurant) {
+        val results = visitRepository.findPriceRangesByRestaurants(listOf(restaurant))
+        if (results.isNotEmpty()) {
+            val topPriceRange = results[0][1] as PriceRange
+            restaurant.priceRange = topPriceRange
+            restaurantRepository.save(restaurant)
+        }
     }
 
     @Transactional(readOnly = true)
@@ -474,6 +464,7 @@ class RestaurantService(
             visitCount = visitCount,
             avgRating = avgRating,
             visitedToday = visitedToday,
+            priceRange = restaurant.priceRange.name,
             recentReviews = recentComments.map { comment ->
                 ReviewSummary(
                     nickname = comment.user.nickname,

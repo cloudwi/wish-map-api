@@ -1,5 +1,6 @@
 package com.mindbridge.wishmap.controller
 
+import com.mindbridge.wishmap.domain.restaurant.PriceRange
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.service.RestaurantService
@@ -27,13 +28,16 @@ class RestaurantController(
         @RequestParam(required = false) category: String?,
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) sortBy: String?,
+        @RequestParam(required = false) priceRange: String?,
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> {
-        // bounds가 있으면 기존 지도용 API, 없으면 리스트 탭용 필터 API
+        val parsedPriceRange = priceRange?.let {
+            try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
+        }
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
-            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, pageable))
         } else {
-            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, pageable))
         }
     }
 
@@ -74,13 +78,6 @@ class RestaurantController(
         @Valid @RequestBody request: QuickVisitRequest
     ): ResponseEntity<QuickVisitResponse> =
         ResponseEntity.ok(restaurantService.quickVisit(user.id, request))
-
-    @PostMapping("/suggest")
-    fun suggest(
-        @AuthenticationPrincipal user: UserPrincipal,
-        @Valid @RequestBody request: SuggestRequest
-    ): ResponseEntity<SuggestResponse> =
-        ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.suggest(user.id, request))
 
     @GetMapping("/place-stats")
     fun getPlaceStats(

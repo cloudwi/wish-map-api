@@ -1,5 +1,6 @@
 package com.mindbridge.wishmap.dto
 
+import com.mindbridge.wishmap.domain.restaurant.PriceRange
 import com.mindbridge.wishmap.domain.restaurant.Restaurant
 import jakarta.validation.constraints.*
 import java.time.LocalDateTime
@@ -42,7 +43,8 @@ data class RestaurantListResponse(
     val thumbnailImage: String?,
     val likeCount: Long,
     val visitCount: Long,
-    val weeklyChampion: String? = null  // 이번 주 방문왕 닉네임
+    val weeklyChampion: String? = null,
+    val priceRange: String
 )
 
 data class RestaurantDetailResponse(
@@ -61,6 +63,7 @@ data class RestaurantDetailResponse(
     val commentCount: Long,
     val isLiked: Boolean,
     val isVisited: Boolean,
+    val priceRange: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
@@ -136,7 +139,12 @@ data class QuickVisitRequest(
     val comment: String? = null,
 
     @field:Min(1) @field:Max(5)
-    val rating: Int? = null
+    val rating: Int? = null,
+
+    @field:NotNull(message = "가격대는 필수입니다")
+    val priceRange: PriceRange,
+
+    val imageUrls: List<String> = emptyList()
 )
 
 data class QuickVisitResponse(
@@ -152,35 +160,12 @@ data class ReviewSummary(
     val createdAt: LocalDateTime
 )
 
-data class SuggestRequest(
-    @field:NotBlank(message = "가게 이름은 필수입니다")
-    val name: String,
-
-    @field:NotNull(message = "위도는 필수입니다")
-    val lat: Double,
-
-    @field:NotNull(message = "경도는 필수입니다")
-    val lng: Double,
-
-    val naverPlaceId: String? = null,
-    val category: String? = null,
-
-    @field:Size(max = 2000)
-    val comment: String? = null,
-
-    val imageUrls: List<String> = emptyList()
-)
-
-data class SuggestResponse(
-    val restaurantId: Long,
-    val isNew: Boolean
-)
-
 data class PlaceStatsResponse(
     val restaurantId: Long,
     val visitCount: Long,
     val avgRating: Double?,
     val visitedToday: Boolean,
+    val priceRange: String,
     val recentReviews: List<ReviewSummary>
 )
 
@@ -194,5 +179,6 @@ fun Restaurant.toListResponse(likeCount: Long, visitCount: Long, weeklyChampion:
     thumbnailImage = thumbnailImage,
     likeCount = likeCount,
     visitCount = visitCount,
-    weeklyChampion = weeklyChampion
+    weeklyChampion = weeklyChampion,
+    priceRange = priceRange.name
 )

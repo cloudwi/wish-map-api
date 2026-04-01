@@ -53,4 +53,14 @@ interface VisitRepository : JpaRepository<Visit, Long> {
     ): List<Array<Any>>
 
     fun deleteAllByUser(user: User)
+
+    // 여러 식당의 최다 보고 가격대 (배치 조회)
+    @Query("""
+        SELECT v.restaurant.id, v.priceRange, COUNT(v) as cnt
+        FROM Visit v
+        WHERE v.restaurant IN :restaurants AND v.priceRange IS NOT NULL
+        GROUP BY v.restaurant.id, v.priceRange
+        ORDER BY v.restaurant.id, cnt DESC
+    """)
+    fun findPriceRangesByRestaurants(restaurants: List<Restaurant>): List<Array<Any>>
 }

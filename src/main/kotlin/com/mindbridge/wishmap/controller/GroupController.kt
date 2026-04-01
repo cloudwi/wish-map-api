@@ -1,5 +1,6 @@
 package com.mindbridge.wishmap.controller
 
+import com.mindbridge.wishmap.domain.restaurant.PriceRange
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.service.GroupService
@@ -120,11 +121,15 @@ class GroupController(
         @RequestParam maxLat: Double,
         @RequestParam minLng: Double,
         @RequestParam maxLng: Double,
+        @RequestParam(required = false) priceRange: String?,
         @PageableDefault(size = 50) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> {
+        val parsedPriceRange = priceRange?.let {
+            try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
+        }
         val memberIds = groupService.getGroupMemberIds(id)
         return ResponseEntity.ok(
-            restaurantService.getRestaurantsByMembers(minLat, maxLat, minLng, maxLng, memberIds, pageable)
+            restaurantService.getRestaurantsByMembers(minLat, maxLat, minLng, maxLng, memberIds, parsedPriceRange, pageable)
         )
     }
 }

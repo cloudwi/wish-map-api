@@ -26,6 +26,10 @@ class Restaurant(
 
     var thumbnailImage: String? = null,
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "price_range", nullable = false)
+    var priceRange: PriceRange = PriceRange.RANGE_10K,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "suggested_by", nullable = false)
     val suggestedBy: User,
