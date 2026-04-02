@@ -2,6 +2,7 @@ package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.comment.Comment
 import com.mindbridge.wishmap.domain.comment.CommentImage
+import com.mindbridge.wishmap.domain.comment.CommentTag
 import com.mindbridge.wishmap.domain.restaurant.Like
 import com.mindbridge.wishmap.domain.restaurant.LikeGroup
 import com.mindbridge.wishmap.domain.restaurant.PriceRange
@@ -413,13 +414,16 @@ class RestaurantService(
         val visit = Visit(restaurant = restaurant, user = user, rating = request.rating, priceRange = request.priceRange)
         visitRepository.save(visit)
 
-        // 리뷰 (한줄평 + 이미지) 처리
-        if (!request.comment.isNullOrBlank() || request.imageUrls.isNotEmpty()) {
+        // 리뷰 (한줄평 + 태그 + 이미지) 처리
+        if (!request.comment.isNullOrBlank() || request.tags.isNotEmpty() || request.imageUrls.isNotEmpty()) {
             val comment = Comment(
                 restaurant = restaurant,
                 user = user,
                 content = request.comment ?: ""
             )
+            request.tags.forEach { tag ->
+                comment.tags.add(CommentTag(comment = comment, tag = tag, category = CommentService.resolveTagCategory(tag)))
+            }
             request.imageUrls.forEachIndexed { index, url ->
                 comment.images.add(CommentImage(comment = comment, imageUrl = url, displayOrder = index))
             }
@@ -470,6 +474,7 @@ class RestaurantService(
                     nickname = comment.user.nickname,
                     profileImage = comment.user.profileImage,
                     content = comment.content,
+                    tags = comment.tags.map { it.tag },
                     createdAt = comment.createdAt
                 )
             }

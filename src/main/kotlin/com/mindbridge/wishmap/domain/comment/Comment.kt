@@ -23,11 +23,15 @@ class Comment(
     var isDeleted: Boolean = false,
 
     @OneToMany(mappedBy = "comment", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val images: MutableList<CommentImage> = mutableListOf()
+    val images: MutableList<CommentImage> = mutableListOf(),
+
+    @OneToMany(mappedBy = "comment", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val tags: MutableList<CommentTag> = mutableListOf()
 ) : BaseEntity() {
 
     fun softDelete() {
         isDeleted = true
         content = "[삭제된 댓글입니다]"
+        tags.clear()
     }
 }

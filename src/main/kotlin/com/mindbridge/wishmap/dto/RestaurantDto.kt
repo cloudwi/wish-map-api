@@ -138,6 +138,8 @@ data class QuickVisitRequest(
     @field:Size(max = 2000)
     val comment: String? = null,
 
+    val tags: List<String> = emptyList(),
+
     @field:Min(1) @field:Max(5)
     val rating: Int? = null,
 
@@ -157,6 +159,7 @@ data class ReviewSummary(
     val nickname: String,
     val profileImage: String?,
     val content: String,
+    val tags: List<String>,
     val createdAt: LocalDateTime
 )
 

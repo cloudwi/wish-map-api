@@ -2,6 +2,7 @@ package com.mindbridge.wishmap.service
 
 import com.mindbridge.wishmap.domain.comment.Comment
 import com.mindbridge.wishmap.domain.comment.CommentImage
+import com.mindbridge.wishmap.domain.comment.CommentTag
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
@@ -61,6 +62,10 @@ class CommentService(
             content = request.content
         )
 
+        request.tags.forEach { tag ->
+            comment.tags.add(CommentTag(comment = comment, tag = tag, category = resolveTagCategory(tag)))
+        }
+
         request.imageUrls.forEachIndexed { index, url ->
             comment.images.add(CommentImage(comment = comment, imageUrl = url, displayOrder = index))
         }
@@ -84,6 +89,10 @@ class CommentService(
         }
 
         comment.content = request.content
+        comment.tags.clear()
+        request.tags.forEach { tag ->
+            comment.tags.add(CommentTag(comment = comment, tag = tag, category = resolveTagCategory(tag)))
+        }
         return comment.toResponse(userId)
     }
 
@@ -97,5 +106,16 @@ class CommentService(
         }
 
         comment.softDelete()
+    }
+
+    companion object {
+        private val TAG_CATEGORY_MAP = mapOf(
+            "혼밥 성지" to "atmosphere", "회식 추천" to "atmosphere", "데이트" to "atmosphere", "조용한" to "atmosphere", "활기찬" to "atmosphere",
+            "매운맛" to "taste", "달콤한" to "taste", "담백한" to "taste", "짜릿한" to "taste", "고소한" to "taste",
+            "주차 편해" to "convenience", "대기 없음" to "convenience", "늦게까지" to "convenience", "반려동물 OK" to "convenience",
+            "또 갈 집" to "oneLiner", "숨은 맛집" to "oneLiner", "점심 맛집" to "oneLiner", "줄 서는 집" to "oneLiner", "가성비 갑" to "oneLiner", "뷰 맛집" to "oneLiner"
+        )
+
+        fun resolveTagCategory(tag: String): String? = TAG_CATEGORY_MAP[tag]
     }
 }

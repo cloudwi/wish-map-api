@@ -6,22 +6,25 @@ import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
 data class CreateCommentRequest(
-    @field:NotBlank(message = "댓글 내용은 필수입니다")
     @field:Size(max = 1000, message = "댓글은 1000자 이하여야 합니다")
-    val content: String,
+    val content: String = "",
+
+    val tags: List<String> = emptyList(),
 
     val imageUrls: List<String> = emptyList()
 )
 
 data class UpdateCommentRequest(
-    @field:NotBlank(message = "댓글 내용은 필수입니다")
     @field:Size(max = 1000, message = "댓글은 1000자 이하여야 합니다")
-    val content: String
+    val content: String = "",
+
+    val tags: List<String> = emptyList()
 )
 
 data class CommentResponse(
     val id: Long,
     val content: String,
+    val tags: List<String>,
     val images: List<String>,
     val user: UserSummary,
     val userVisitCount: Long,
@@ -35,6 +38,7 @@ data class CommentResponse(
 fun Comment.toResponse(currentUserId: Long?, userVisitCount: Long = 0) = CommentResponse(
     id = id,
     content = content,
+    tags = tags.map { it.tag },
     images = images.sortedBy { it.displayOrder }.map { it.imageUrl },
     user = UserSummary(
         id = user.id,
