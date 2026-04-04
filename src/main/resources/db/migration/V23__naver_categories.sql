@@ -1,16 +1,18 @@
--- 기존 place_categories 데이터 교체 (네이버 카테고리 대분류 기반)
-DELETE FROM place_category_tags;
-DELETE FROM place_categories;
+-- 기존 카테고리 이름을 네이버 대분류 기반으로 변경
+UPDATE place_categories SET name = '음식점' WHERE id = 1;
+UPDATE place_categories SET name = '카페,디저트', has_price_range = TRUE WHERE id = 2;
+UPDATE place_categories SET name = '쇼핑,유통' WHERE id = 3;
+UPDATE place_categories SET name = '생활,편의' WHERE id = 4;
+UPDATE place_categories SET name = '여행,숙박' WHERE id = 5;
 
-INSERT INTO place_categories (id, name, icon, priority, has_price_range) VALUES
-(1, '음식점', NULL, 1, TRUE),
-(2, '카페,디저트', NULL, 2, TRUE),
-(3, '쇼핑,유통', NULL, 3, FALSE),
-(4, '생활,편의', NULL, 4, FALSE),
-(5, '여행,숙박', NULL, 5, FALSE),
-(6, '문화,예술', NULL, 6, FALSE),
-(7, '교육,학문', NULL, 7, FALSE),
-(8, '의료,건강', NULL, 8, FALSE);
+-- 새 카테고리 추가
+INSERT INTO place_categories (name, icon, priority, has_price_range) VALUES
+('문화,예술', NULL, 6, FALSE),
+('교육,학문', NULL, 7, FALSE),
+('의료,건강', NULL, 8, FALSE);
+
+-- 기존 태그 삭제 후 재생성
+DELETE FROM place_category_tags;
 
 -- 음식점 태그
 INSERT INTO place_category_tags (category_id, tag_group, tag, priority) VALUES
@@ -38,18 +40,22 @@ INSERT INTO place_category_tags (category_id, tag_group, tag, priority) VALUES
 INSERT INTO place_category_tags (category_id, tag_group, tag, priority) VALUES
 (5, '특징', '뷰 맛집', 1), (5, '특징', '깨끗한', 2), (5, '특징', '가성비', 3), (5, '특징', '위치 좋은', 4);
 
--- 문화,예술 태그
-INSERT INTO place_category_tags (category_id, tag_group, tag, priority) VALUES
-(6, '특징', '볼거리 많은', 1), (6, '특징', '조용한', 2), (6, '특징', '가족 추천', 3), (6, '특징', '데이트', 4);
-
--- 의료,건강 태그
-INSERT INTO place_category_tags (category_id, tag_group, tag, priority) VALUES
-(7, '특징', '친절한', 1), (7, '특징', '실력 좋은', 2), (7, '특징', '대기 없음', 3), (7, '특징', '깨끗한', 4);
+-- 문화,예술 태그 (새 카테고리 ID 조회)
+INSERT INTO place_category_tags (category_id, tag_group, tag, priority)
+SELECT id, '특징', '볼거리 많은', 1 FROM place_categories WHERE name = '문화,예술'
+UNION ALL SELECT id, '특징', '조용한', 2 FROM place_categories WHERE name = '문화,예술'
+UNION ALL SELECT id, '특징', '가족 추천', 3 FROM place_categories WHERE name = '문화,예술'
+UNION ALL SELECT id, '특징', '데이트', 4 FROM place_categories WHERE name = '문화,예술';
 
 -- 교육,학문 태그
-INSERT INTO place_category_tags (category_id, tag_group, tag, priority) VALUES
-(8, '특징', '전문적인', 1), (8, '특징', '친절한', 2), (8, '특징', '가성비', 3);
+INSERT INTO place_category_tags (category_id, tag_group, tag, priority)
+SELECT id, '특징', '전문적인', 1 FROM place_categories WHERE name = '교육,학문'
+UNION ALL SELECT id, '특징', '친절한', 2 FROM place_categories WHERE name = '교육,학문'
+UNION ALL SELECT id, '특징', '가성비', 3 FROM place_categories WHERE name = '교육,학문';
 
--- 시퀀스 리셋
-SELECT setval('place_categories_id_seq', 8);
-SELECT setval('place_category_tags_id_seq', (SELECT MAX(id) FROM place_category_tags));
+-- 의료,건강 태그
+INSERT INTO place_category_tags (category_id, tag_group, tag, priority)
+SELECT id, '특징', '친절한', 1 FROM place_categories WHERE name = '의료,건강'
+UNION ALL SELECT id, '특징', '실력 좋은', 2 FROM place_categories WHERE name = '의료,건강'
+UNION ALL SELECT id, '특징', '대기 없음', 3 FROM place_categories WHERE name = '의료,건강'
+UNION ALL SELECT id, '특징', '깨끗한', 4 FROM place_categories WHERE name = '의료,건강';
