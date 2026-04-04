@@ -27,8 +27,11 @@ class Restaurant(
     var thumbnailImage: String? = null,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "price_range", nullable = false)
-    var priceRange: PriceRange = PriceRange.RANGE_10K,
+    @Column(name = "price_range")
+    var priceRange: PriceRange? = null,
+
+    @Column(name = "place_category_id")
+    var placeCategoryId: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "suggested_by", nullable = false)

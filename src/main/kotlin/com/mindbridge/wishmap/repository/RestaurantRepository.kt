@@ -14,27 +14,16 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         SELECT r FROM Restaurant r
         WHERE r.lat BETWEEN :minLat AND :maxLat
         AND r.lng BETWEEN :minLng AND :maxLng
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
     """)
-    fun findByLocationBounds(
+    fun findByLocationBoundsWithFilters(
         minLat: Double,
         maxLat: Double,
         minLng: Double,
         maxLng: Double,
-        pageable: Pageable
-    ): Page<Restaurant>
-
-    @Query("""
-        SELECT r FROM Restaurant r
-        WHERE r.lat BETWEEN :minLat AND :maxLat
-        AND r.lng BETWEEN :minLng AND :maxLng
-        AND r.priceRange = :priceRange
-    """)
-    fun findByLocationBoundsAndPriceRange(
-        minLat: Double,
-        maxLat: Double,
-        minLng: Double,
-        maxLng: Double,
-        priceRange: PriceRange,
+        priceRange: PriceRange?,
+        placeCategoryId: Long?,
         pageable: Pageable
     ): Page<Restaurant>
 

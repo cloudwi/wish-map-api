@@ -29,13 +29,14 @@ class RestaurantController(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) sortBy: String?,
         @RequestParam(required = false) priceRange: String?,
+        @RequestParam(required = false) placeCategoryId: Long?,
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> {
         val parsedPriceRange = priceRange?.let {
             try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
         }
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
-            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, pageable))
         } else {
             ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, pageable))
         }

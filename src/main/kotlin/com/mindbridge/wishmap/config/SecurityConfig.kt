@@ -39,6 +39,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}/comments").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/place-stats").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/categories").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/place-categories").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
 
                     // 인프라 / 개발 도구

@@ -44,7 +44,8 @@ data class RestaurantListResponse(
     val likeCount: Long,
     val visitCount: Long,
     val weeklyChampion: String? = null,
-    val priceRange: String
+    val priceRange: String?,
+    val placeCategoryId: Long?
 )
 
 data class RestaurantDetailResponse(
@@ -63,7 +64,8 @@ data class RestaurantDetailResponse(
     val commentCount: Long,
     val isLiked: Boolean,
     val isVisited: Boolean,
-    val priceRange: String,
+    val priceRange: String?,
+    val placeCategoryId: Long?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
@@ -143,8 +145,9 @@ data class QuickVisitRequest(
     @field:Min(1) @field:Max(5)
     val rating: Int? = null,
 
-    @field:NotNull(message = "가격대는 필수입니다")
-    val priceRange: PriceRange,
+    val priceRange: PriceRange? = null,
+
+    val placeCategoryId: Long? = null,
 
     val imageUrls: List<String> = emptyList()
 )
@@ -168,7 +171,8 @@ data class PlaceStatsResponse(
     val visitCount: Long,
     val avgRating: Double?,
     val visitedToday: Boolean,
-    val priceRange: String,
+    val priceRange: String?,
+    val placeCategoryId: Long?,
     val recentReviews: List<ReviewSummary>
 )
 
@@ -183,5 +187,6 @@ fun Restaurant.toListResponse(likeCount: Long, visitCount: Long, weeklyChampion:
     likeCount = likeCount,
     visitCount = visitCount,
     weeklyChampion = weeklyChampion,
-    priceRange = priceRange.name
+    priceRange = priceRange?.name,
+    placeCategoryId = placeCategoryId
 )

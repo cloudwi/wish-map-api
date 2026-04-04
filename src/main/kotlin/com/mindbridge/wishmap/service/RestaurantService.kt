@@ -49,13 +49,12 @@ class RestaurantService(
         minLng: Double,
         maxLng: Double,
         priceRange: PriceRange?,
+        placeCategoryId: Long?,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        val page = if (priceRange != null) {
-            restaurantRepository.findByLocationBoundsAndPriceRange(minLat, maxLat, minLng, maxLng, priceRange, pageable)
-        } else {
-            restaurantRepository.findByLocationBounds(minLat, maxLat, minLng, maxLng, pageable)
-        }
+        val page = restaurantRepository.findByLocationBoundsWithFilters(
+            minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, pageable
+        )
         val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
@@ -205,7 +204,8 @@ class RestaurantService(
             commentCount = commentCount,
             isLiked = isLiked,
             isVisited = isVisited,
-            priceRange = restaurant.priceRange.name,
+            priceRange = restaurant.priceRange?.name,
+            placeCategoryId = restaurant.placeCategoryId,
             createdAt = restaurant.createdAt,
             updatedAt = restaurant.updatedAt
         )
@@ -222,15 +222,15 @@ class RestaurantService(
         if (visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
                 restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )) {
-            throw DuplicateResourceException("오늘 이미 방문 인증한 맛집입니다")
+            throw DuplicateResourceException("오늘 이미 방문 인증한 장소입니다")
         }
 
         val distance = haversineDistance(request.lat, request.lng, restaurant.lat, restaurant.lng)
         if (distance > VISIT_DISTANCE_LIMIT_METERS) {
-            throw IllegalArgumentException("맛집에서 100m 이내에서만 방문 인증이 가능합니다")
+            throw IllegalArgumentException("장소에서 100m 이내에서만 방문 인증이 가능합니다")
         }
 
-        visitRepository.save(Visit(restaurant = restaurant, user = user, priceRange = restaurant.priceRange))
+        visitRepository.save(Visit(restaurant = restaurant, user = user, priceRange = restaurant.priceRange ?: PriceRange.RANGE_10K))
         return true
     }
 
@@ -243,6 +243,7 @@ class RestaurantService(
                 naverPlaceId = request.naverPlaceId,
                 category = request.category,
                 priceRange = request.priceRange,
+                placeCategoryId = request.placeCategoryId,
                 suggestedBy = user
             )
         )
@@ -401,14 +402,14 @@ class RestaurantService(
 
         val distance = haversineDistance(request.userLat, request.userLng, restaurant.lat, restaurant.lng)
         if (distance > VISIT_DISTANCE_LIMIT_METERS) {
-            throw IllegalArgumentException("맛집에서 100m 이내에서만 방문 인증이 가능합니다")
+            throw IllegalArgumentException("장소에서 100m 이내에서만 방문 인증이 가능합니다")
         }
 
         val today = LocalDate.now()
         if (visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
                 restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )) {
-            throw DuplicateResourceException("오늘 이미 방문 인증한 맛집입니다")
+            throw DuplicateResourceException("오늘 이미 방문 인증한 장소입니다")
         }
 
         val visit = Visit(restaurant = restaurant, user = user, rating = request.rating, priceRange = request.priceRange)
@@ -439,9 +440,11 @@ class RestaurantService(
     private fun updateCachedPriceRange(restaurant: Restaurant) {
         val results = visitRepository.findPriceRangesByRestaurants(listOf(restaurant))
         if (results.isNotEmpty()) {
-            val topPriceRange = results[0][1] as PriceRange
-            restaurant.priceRange = topPriceRange
-            restaurantRepository.save(restaurant)
+            val topPriceRange = results[0][1] as? PriceRange
+            if (topPriceRange != null) {
+                restaurant.priceRange = topPriceRange
+                restaurantRepository.save(restaurant)
+            }
         }
     }
 
@@ -468,7 +471,8 @@ class RestaurantService(
             visitCount = visitCount,
             avgRating = avgRating,
             visitedToday = visitedToday,
-            priceRange = restaurant.priceRange.name,
+            priceRange = restaurant.priceRange?.name,
+            placeCategoryId = restaurant.placeCategoryId,
             recentReviews = recentComments.map { comment ->
                 ReviewSummary(
                     nickname = comment.user.nickname,

@@ -110,10 +110,24 @@ class CommentService(
 
     companion object {
         private val TAG_CATEGORY_MAP = mapOf(
-            "혼밥 성지" to "atmosphere", "회식 추천" to "atmosphere", "데이트" to "atmosphere", "조용한" to "atmosphere", "활기찬" to "atmosphere",
-            "매운맛" to "taste", "달콤한" to "taste", "담백한" to "taste", "짜릿한" to "taste", "고소한" to "taste",
-            "주차 편해" to "convenience", "대기 없음" to "convenience", "늦게까지" to "convenience", "반려동물 OK" to "convenience",
-            "또 갈 집" to "oneLiner", "숨은 맛집" to "oneLiner", "점심 맛집" to "oneLiner", "줄 서는 집" to "oneLiner", "가성비 갑" to "oneLiner", "뷰 맛집" to "oneLiner"
+            // 음식
+            "혼밥 성지" to "분위기", "회식 추천" to "분위기", "데이트" to "분위기", "조용한" to "분위기", "활기찬" to "분위기",
+            "매운맛" to "맛 특징", "달콤한" to "맛 특징", "담백한" to "맛 특징", "짜릿한" to "맛 특징", "고소한" to "맛 특징",
+            "주차 편해" to "편의", "대기 없음" to "편의", "늦게까지" to "편의", "반려동물 OK" to "편의",
+            "또 갈 집" to "한줄평", "숨은 맛집" to "한줄평", "점심 맛집" to "한줄평", "가성비 갑" to "한줄평",
+            // 카페
+            "넓은" to "분위기", "루프탑" to "분위기", "감성적인" to "분위기", "작업하기 좋은" to "분위기",
+            "커피 맛집" to "메뉴", "디저트 맛집" to "메뉴", "브런치" to "메뉴", "음료 다양" to "메뉴",
+            "또 갈 곳" to "한줄평", "숨은 카페" to "한줄평", "뷰 맛집" to "한줄평",
+            // 디저트/간식
+            "붕어빵" to "종류", "호떡" to "종류", "타코야끼" to "종류", "와플" to "종류", "마카롱" to "종류",
+            "줄 서는 곳" to "특징", "가성비" to "특징", "수제" to "특징", "계절 한정" to "특징",
+            // 자연/풍경
+            "벚꽃" to "종류", "단풍" to "종류", "야경" to "종류", "일출" to "종류", "공원" to "종류",
+            "사진 맛집" to "특징", "산책 코스" to "특징", "드라이브" to "특징", "피크닉" to "특징",
+            // 생활편의
+            "철물점" to "종류", "세탁소" to "종류", "수선집" to "종류", "열쇠" to "종류",
+            "친절한" to "특징", "실력 좋은" to "특징", "빠른" to "특징"
         )
 
         fun resolveTagCategory(tag: String): String? = TAG_CATEGORY_MAP[tag]

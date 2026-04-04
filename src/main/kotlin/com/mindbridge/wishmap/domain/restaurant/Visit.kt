@@ -19,6 +19,6 @@ class Visit(
     var rating: Int? = null,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "price_range", nullable = false)
-    var priceRange: PriceRange = PriceRange.RANGE_10K
+    @Column(name = "price_range")
+    var priceRange: PriceRange? = null
 ) : BaseTimeEntity()

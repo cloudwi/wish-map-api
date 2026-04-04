@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @RestController
 @RequestMapping("/api/v1/search")
@@ -62,23 +63,28 @@ class SearchController(
 
         val clampedDisplay = display.coerceIn(1, 5)
 
-        val result = webClient.get()
-            .uri { uriBuilder ->
-                uriBuilder
-                    .scheme("https")
-                    .host("openapi.naver.com")
-                    .path("/v1/search/image")
-                    .queryParam("query", query)
-                    .queryParam("display", clampedDisplay)
-                    .queryParam("sort", "sim")
-                    .build()
-            }
-            .header("X-Naver-Client-Id", clientId)
-            .header("X-Naver-Client-Secret", clientSecret)
-            .retrieve()
-            .bodyToMono(Map::class.java)
-            .block()
+        return try {
+            val result = webClient.get()
+                .uri { uriBuilder ->
+                    uriBuilder
+                        .scheme("https")
+                        .host("openapi.naver.com")
+                        .path("/v1/search/image")
+                        .queryParam("query", query)
+                        .queryParam("display", clampedDisplay)
+                        .queryParam("sort", "sim")
+                        .build()
+                }
+                .header("X-Naver-Client-Id", clientId)
+                .header("X-Naver-Client-Secret", clientSecret)
+                .retrieve()
+                .bodyToMono(Map::class.java)
+                .block()
 
-        return ResponseEntity.ok(result)
+            ResponseEntity.ok(result)
+        } catch (e: WebClientResponseException.TooManyRequests) {
+            logger.warn("Naver image search rate limited")
+            ResponseEntity.ok(mapOf("items" to emptyList<Any>()))
+        }
     }
 }
