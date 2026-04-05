@@ -73,23 +73,15 @@ class RestaurantService(
         search: String?,
         sort: String?,
         priceRange: PriceRange?,
+        placeCategoryId: Long?,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        val effectiveCategory = category?.takeIf { it.isNotBlank() }
         val effectiveSearch = search?.takeIf { it.isNotBlank() }
 
         val page = if (sort == "visits") {
-            if (priceRange != null) {
-                restaurantRepository.findWithFiltersSortByVisitsAndPriceRange(effectiveCategory, effectiveSearch, priceRange, pageable)
-            } else {
-                restaurantRepository.findWithFiltersSortByVisits(effectiveCategory, effectiveSearch, pageable)
-            }
+            restaurantRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, pageable)
         } else {
-            if (priceRange != null) {
-                restaurantRepository.findWithFiltersAndPriceRange(effectiveCategory, effectiveSearch, priceRange, pageable)
-            } else {
-                restaurantRepository.findWithFilters(effectiveCategory, effectiveSearch, pageable)
-            }
+            restaurantRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, pageable)
         }
 
         val likeCountMap = batchLikeCounts(page.content)

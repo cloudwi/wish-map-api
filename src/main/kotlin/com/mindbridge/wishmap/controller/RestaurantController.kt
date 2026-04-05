@@ -38,7 +38,7 @@ class RestaurantController(
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
             ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, pageable))
         } else {
-            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, pageable))
         }
     }
 

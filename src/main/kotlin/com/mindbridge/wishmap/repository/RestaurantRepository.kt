@@ -73,83 +73,47 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         memberIds: List<Long>, priceRange: PriceRange, pageable: Pageable
     ): Page<Restaurant>
 
-    // 필터 + 검색 + 최신순 정렬 (list 탭용)
+    // 필터 + 검색 + 최신순 정렬 (list 탭용) - placeCategoryId 기반
     @Query("""
         SELECT r FROM Restaurant r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
         ORDER BY r.createdAt DESC
     """,
     countQuery = """
         SELECT COUNT(r) FROM Restaurant r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
     """)
     fun findWithFilters(
-        category: String?,
+        placeCategoryId: Long?,
         search: String?,
+        priceRange: PriceRange?,
         pageable: Pageable
     ): Page<Restaurant>
 
-    @Query("""
-        SELECT r FROM Restaurant r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
-        AND r.priceRange = :priceRange
-        ORDER BY r.createdAt DESC
-    """,
-    countQuery = """
-        SELECT COUNT(r) FROM Restaurant r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
-        AND r.priceRange = :priceRange
-    """)
-    fun findWithFiltersAndPriceRange(
-        category: String?,
-        search: String?,
-        priceRange: PriceRange,
-        pageable: Pageable
-    ): Page<Restaurant>
-
-    // 필터 + 검색 + 방문 수 정렬 (list 탭용)
+    // 필터 + 검색 + 방문 수 정렬 (list 탭용) - placeCategoryId 기반
     @Query("""
         SELECT r FROM Restaurant r
         LEFT JOIN Visit v ON v.restaurant = r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
         GROUP BY r
         ORDER BY COUNT(v) DESC, r.createdAt DESC
     """,
     countQuery = """
         SELECT COUNT(r) FROM Restaurant r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
     """)
     fun findWithFiltersSortByVisits(
-        category: String?,
+        placeCategoryId: Long?,
         search: String?,
-        pageable: Pageable
-    ): Page<Restaurant>
-
-    @Query("""
-        SELECT r FROM Restaurant r
-        LEFT JOIN Visit v ON v.restaurant = r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
-        AND r.priceRange = :priceRange
-        GROUP BY r
-        ORDER BY COUNT(v) DESC, r.createdAt DESC
-    """,
-    countQuery = """
-        SELECT COUNT(r) FROM Restaurant r
-        WHERE (COALESCE(:category, '') = '' OR r.category LIKE CONCAT(CAST(:category AS string), '%'))
-        AND (COALESCE(:search, '') = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
-        AND r.priceRange = :priceRange
-    """)
-    fun findWithFiltersSortByVisitsAndPriceRange(
-        category: String?,
-        search: String?,
-        priceRange: PriceRange,
+        priceRange: PriceRange?,
         pageable: Pageable
     ): Page<Restaurant>
 }
