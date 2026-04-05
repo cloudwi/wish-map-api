@@ -1,10 +1,10 @@
 package com.mindbridge.wishmap.config
 
+import com.mindbridge.wishmap.repository.AppVersionControlRepository
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
@@ -13,7 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 class AppVersionFilter(
-    @Value("\${app.min-version:1.0.0}") private val minVersion: String
+    private val appVersionControlRepository: AppVersionControlRepository
 ) : OncePerRequestFilter() {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -24,13 +24,18 @@ class AppVersionFilter(
         filterChain: FilterChain
     ) {
         val appVersion = request.getHeader("X-App-Version")
+        val platform = request.getHeader("X-App-Platform")
 
-        if (appVersion != null && isVersionLower(appVersion, minVersion)) {
-            log.info("Force update required: app={} min={}", appVersion, minVersion)
-            response.status = 426
-            response.contentType = "application/json"
-            response.writer.write("""{"error":"upgrade_required","message":"앱을 최신 버전으로 업데이트해주세요.","minVersion":"$minVersion"}""")
-            return
+        if (appVersion != null && platform != null) {
+            val versionControl = appVersionControlRepository.findByPlatform(platform)
+            if (versionControl != null && isVersionLower(appVersion, versionControl.minVersion)) {
+                log.info("Force update required: platform={} app={} min={}", platform, appVersion, versionControl.minVersion)
+                response.status = 426
+                response.contentType = "application/json"
+                response.characterEncoding = "UTF-8"
+                response.writer.write("""{"error":"upgrade_required","message":"앱을 최신 버전으로 업데이트해주세요.","minVersion":"${versionControl.minVersion}","storeUrl":"${versionControl.storeUrl ?: ""}"}""")
+                return
+            }
         }
 
         filterChain.doFilter(request, response)

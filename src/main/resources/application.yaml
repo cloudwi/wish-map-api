@@ -9,10 +9,6 @@ spring:
     problemdetails:
       enabled: true
 
-# 앱 최소 버전 (강제 업데이트)
-app:
-  min-version: ${APP_MIN_VERSION:1.0.0}
-
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET:}
