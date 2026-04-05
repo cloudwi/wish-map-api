@@ -73,47 +73,61 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         memberIds: List<Long>, priceRange: PriceRange, pageable: Pageable
     ): Page<Restaurant>
 
-    // 필터 + 검색 + 최신순 정렬 (list 탭용) - placeCategoryId 기반
+    // 필터 + 검색 + 태그 + 최신순 정렬 (list 탭용)
     @Query("""
-        SELECT r FROM Restaurant r
+        SELECT DISTINCT r FROM Restaurant r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        LEFT JOIN CommentTag ct ON ct.comment = c
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:tag IS NULL OR ct.tag = :tag)
         ORDER BY r.createdAt DESC
     """,
     countQuery = """
-        SELECT COUNT(r) FROM Restaurant r
+        SELECT COUNT(DISTINCT r) FROM Restaurant r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        LEFT JOIN CommentTag ct ON ct.comment = c
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:tag IS NULL OR ct.tag = :tag)
     """)
     fun findWithFilters(
         placeCategoryId: Long?,
         search: String?,
         priceRange: PriceRange?,
+        tag: String?,
         pageable: Pageable
     ): Page<Restaurant>
 
-    // 필터 + 검색 + 방문 수 정렬 (list 탭용) - placeCategoryId 기반
+    // 필터 + 검색 + 태그 + 방문 수 정렬 (list 탭용)
     @Query("""
         SELECT r FROM Restaurant r
         LEFT JOIN Visit v ON v.restaurant = r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        LEFT JOIN CommentTag ct ON ct.comment = c
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:tag IS NULL OR ct.tag = :tag)
         GROUP BY r
-        ORDER BY COUNT(v) DESC, r.createdAt DESC
+        ORDER BY COUNT(DISTINCT v) DESC, r.createdAt DESC
     """,
     countQuery = """
-        SELECT COUNT(r) FROM Restaurant r
+        SELECT COUNT(DISTINCT r) FROM Restaurant r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        LEFT JOIN CommentTag ct ON ct.comment = c
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:tag IS NULL OR ct.tag = :tag)
     """)
     fun findWithFiltersSortByVisits(
         placeCategoryId: Long?,
         search: String?,
         priceRange: PriceRange?,
+        tag: String?,
         pageable: Pageable
     ): Page<Restaurant>
 }

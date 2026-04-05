@@ -30,6 +30,7 @@ class RestaurantController(
         @RequestParam(required = false) sortBy: String?,
         @RequestParam(required = false) priceRange: String?,
         @RequestParam(required = false) placeCategoryId: Long?,
+        @RequestParam(required = false) tag: String?,
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> {
         val parsedPriceRange = priceRange?.let {
@@ -38,7 +39,7 @@ class RestaurantController(
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
             ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, pageable))
         } else {
-            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, tag, pageable))
         }
     }
 
