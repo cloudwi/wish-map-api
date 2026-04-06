@@ -57,6 +57,7 @@ class AuthService(
             .findByProviderAndProviderId(provider, oAuthUserInfo.providerId)
 
         val user = if (socialAccount.isPresent) {
+            log.info("로그인: provider={}, userId={}", provider, socialAccount.get().user.id)
             socialAccount.get().user
         } else {
             try {
@@ -77,6 +78,7 @@ class AuthService(
                 socialAccountRepository.save(newSocialAccount)
                 newUser.addSocialAccount(newSocialAccount)
 
+                log.info("회원가입: provider={}, userId={}, nickname={}", provider, newUser.id, newUser.nickname)
                 newUser
             } catch (e: DataIntegrityViolationException) {
                 // 동시 요청으로 이미 생성된 경우 기존 계정으로 로그인
@@ -195,6 +197,7 @@ class AuthService(
 
     @Transactional
     fun updateNickname(userId: Long, newNickname: String): UserResponse {
+        log.info("닉네임 변경 요청: userId={}, newNickname={}", userId, newNickname)
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 

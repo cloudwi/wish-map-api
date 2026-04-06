@@ -28,12 +28,14 @@ import kotlin.math.*
 
 @Service
 class RestaurantService(
+    private val log: org.slf4j.Logger = org.slf4j.LoggerFactory.getLogger(RestaurantService::class.java),
     private val restaurantRepository: RestaurantRepository,
     private val userRepository: UserRepository,
     private val likeRepository: LikeRepository,
     private val likeGroupRepository: LikeGroupRepository,
     private val commentRepository: CommentRepository,
-    private val visitRepository: VisitRepository
+    private val visitRepository: VisitRepository,
+    private val naverSearchService: NaverSearchService
 ) {
 
     companion object {
@@ -104,11 +106,7 @@ class RestaurantService(
         memberIds: List<Long>, priceRange: PriceRange?, pageable: Pageable
     ): Page<RestaurantListResponse> {
         if (memberIds.isEmpty()) return Page.empty()
-        val page = if (priceRange != null) {
-            restaurantRepository.findByLocationBoundsAndMembersAndPriceRange(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
-        } else {
-            restaurantRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, pageable)
-        }
+        val page = restaurantRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         return page.map { restaurant ->
@@ -141,21 +139,18 @@ class RestaurantService(
         return Pair(monday.atStartOfDay(), nextMonday.atStartOfDay())
     }
 
-    // 모든 식당의 주간 방문왕을 배치로 조회
+    // 조회 대상 식당의 주간 방문왕을 배치로 조회
     private fun batchWeeklyChampions(restaurants: List<Restaurant>): Map<Long, String> {
         if (restaurants.isEmpty()) return emptyMap()
+        val restaurantIds = restaurants.map { it.id }
         val (weekStart, weekEnd) = getWeekRange()
-        val results = visitRepository.findAllWeeklyChampions(weekStart, weekEnd)
+        val results = visitRepository.findWeeklyChampionsByRestaurantIds(restaurantIds, weekStart, weekEnd)
 
-        // 식당별로 가장 많이 방문한 유저의 닉네임 추출 (첫 번째가 최다 방문자)
         val championMap = mutableMapOf<Long, String>()
         for (row in results) {
             val restaurantId = row[0] as Long
             val nickname = row[1] as String
-            // 첫 번째로 나오는 것이 최다 방문자 (ORDER BY cnt DESC)
-            if (!championMap.containsKey(restaurantId)) {
-                championMap[restaurantId] = nickname
-            }
+            championMap.putIfAbsent(restaurantId, nickname)
         }
         return championMap
     }
@@ -228,8 +223,9 @@ class RestaurantService(
         return true
     }
 
-    private fun createRestaurantFromQuickVisit(request: QuickVisitRequest, user: User): Restaurant =
-        restaurantRepository.save(
+    private fun createRestaurantFromQuickVisit(request: QuickVisitRequest, user: User): Restaurant {
+        val thumbnail = naverSearchService.searchThumbnail(request.name)
+        return restaurantRepository.save(
             Restaurant(
                 name = request.name,
                 lat = request.lat,
@@ -238,9 +234,11 @@ class RestaurantService(
                 category = request.category,
                 priceRange = request.priceRange,
                 placeCategoryId = request.placeCategoryId,
+                thumbnailImage = thumbnail,
                 suggestedBy = user
             )
         )
+    }
 
     private fun haversineDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
         val dLat = Math.toRadians(lat2 - lat1)
@@ -260,6 +258,7 @@ class RestaurantService(
             throw IllegalArgumentException("이미 등록된 장소입니다")
         }
 
+        val thumbnail = request.thumbnailImage ?: naverSearchService.searchThumbnail(request.name)
         val restaurant = Restaurant(
             name = request.name,
             lat = request.lat,
@@ -267,7 +266,7 @@ class RestaurantService(
             naverPlaceId = request.naverPlaceId,
             category = request.category,
             description = request.description,
-            thumbnailImage = request.thumbnailImage,
+            thumbnailImage = thumbnail,
             suggestedBy = user
         )
 
@@ -440,6 +439,16 @@ class RestaurantService(
         // 가격대 캐시 업데이트
         updateCachedPriceRange(restaurant)
 
+        // thumbnail이 없는 기존 장소에 이미지 채우기
+        if (restaurant.thumbnailImage == null) {
+            val thumbnail = naverSearchService.searchThumbnail(restaurant.name)
+            if (thumbnail != null) {
+                restaurant.thumbnailImage = thumbnail
+                restaurantRepository.save(restaurant)
+            }
+        }
+
+        log.info("방문인증: userId={}, restaurantId={}, isNew={}, name={}", userId, restaurant.id, isNew, restaurant.name)
         return QuickVisitResponse(restaurantId = restaurant.id, visited = true, isNew = isNew)
     }
 

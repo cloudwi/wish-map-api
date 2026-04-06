@@ -41,7 +41,7 @@ class GlobalExceptionHandler {
             .status(HttpStatus.FORBIDDEN)
             .body(ErrorResponse(
                 code = "FORBIDDEN",
-                message = e.message ?: "Access denied"
+                message = e.message ?: "접근 권한이 없습니다."
             ))
     }
 

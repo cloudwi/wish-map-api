@@ -54,23 +54,11 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         WHERE r.lat BETWEEN :minLat AND :maxLat
         AND r.lng BETWEEN :minLng AND :maxLng
         AND (r.suggestedBy.id IN :memberIds OR v.user.id IN :memberIds)
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
     """)
     fun findByLocationBoundsAndMembers(
         minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
-        memberIds: List<Long>, pageable: Pageable
-    ): Page<Restaurant>
-
-    @Query("""
-        SELECT DISTINCT r FROM Restaurant r
-        LEFT JOIN Visit v ON v.restaurant = r
-        WHERE r.lat BETWEEN :minLat AND :maxLat
-        AND r.lng BETWEEN :minLng AND :maxLng
-        AND (r.suggestedBy.id IN :memberIds OR v.user.id IN :memberIds)
-        AND r.priceRange = :priceRange
-    """)
-    fun findByLocationBoundsAndMembersAndPriceRange(
-        minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
-        memberIds: List<Long>, priceRange: PriceRange, pageable: Pageable
+        memberIds: List<Long>, priceRange: PriceRange?, pageable: Pageable
     ): Page<Restaurant>
 
     // 같은 카테고리 + 근접 위치(bounds)로 기존 장소 찾기 (커스텀 장소 중복 방지)

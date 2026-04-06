@@ -87,4 +87,5 @@ class SearchController(
             ResponseEntity.ok(mapOf("items" to emptyList<Any>()))
         }
     }
+
 }

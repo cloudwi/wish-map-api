@@ -20,6 +20,8 @@ class FriendService(
     private val notificationService: NotificationService
 ) {
 
+    private val log = org.slf4j.LoggerFactory.getLogger(FriendService::class.java)
+
     fun searchUsers(query: String, currentUserId: Long): List<UserSearchResult> {
         if (query.length < 2) return emptyList()
 
@@ -67,6 +69,7 @@ class FriendService(
         require(friend.status == FriendStatus.PENDING) { "이미 처리된 요청입니다" }
 
         friend.status = if (accept) FriendStatus.ACCEPTED else FriendStatus.REJECTED
+        log.info("친구 요청 {}: friendId={}, userId={}", if (accept) "수락" else "거절", friendId, userId)
         return friend.toResponse(currentUserId = userId)
     }
 

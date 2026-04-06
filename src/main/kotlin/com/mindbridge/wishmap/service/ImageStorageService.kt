@@ -14,6 +14,7 @@ class ImageStorageService(
     @Value("\${supabase.bucket:restaurant-images}") private val bucket: String
 ) {
 
+    private val log = org.slf4j.LoggerFactory.getLogger(ImageStorageService::class.java)
     private val webClient = WebClient.builder().build()
 
     /**
@@ -34,7 +35,9 @@ class ImageStorageService(
             .toBodilessEntity()
             .block()
 
-        return "$supabaseUrl/storage/v1/object/public/$bucket/$fileName"
+        val publicUrl = "$supabaseUrl/storage/v1/object/public/$bucket/$fileName"
+        log.info("이미지 업로드: fileName={}, size={}KB", fileName, file.size / 1024)
+        return publicUrl
     }
 
     /**

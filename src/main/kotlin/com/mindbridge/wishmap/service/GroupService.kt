@@ -23,6 +23,8 @@ class GroupService(
     private val notificationService: NotificationService
 ) {
 
+    private val log = org.slf4j.LoggerFactory.getLogger(GroupService::class.java)
+
     @Transactional(readOnly = true)
     fun getMyGroups(userId: Long): List<GroupResponse> {
         val user = userRepository.findById(userId)
@@ -39,6 +41,7 @@ class GroupService(
         val member = GroupMember(group = group, user = user, role = GroupRole.LEADER, status = MemberStatus.ACCEPTED)
         groupMemberRepository.save(member)
         group.members.add(member)
+        log.info("그룹 생성: userId={}, groupId={}, name={}", userId, group.id, group.name)
         return group.toResponse(userId)
     }
 
@@ -132,6 +135,7 @@ class GroupService(
             throw IllegalArgumentException("대기 중인 초대가 아닙니다")
         }
         member.status = MemberStatus.ACCEPTED
+        log.info("그룹 초대 수락: userId={}, groupId={}", userId, groupId)
     }
 
     @Transactional
@@ -179,10 +183,12 @@ class GroupService(
         if (newLeaderMember.status != MemberStatus.ACCEPTED) {
             throw IllegalArgumentException("수락된 구성원만 그룹장이 될 수 있습니다")
         }
-        val oldLeaderMember = groupMemberRepository.findByGroupAndUser(group, group.leader)!!
+        val oldLeaderMember = groupMemberRepository.findByGroupAndUser(group, group.leader)
+            ?: throw ResourceNotFoundException("기존 그룹장의 멤버 정보를 찾을 수 없습니다")
         oldLeaderMember.role = GroupRole.MEMBER
         newLeaderMember.role = GroupRole.LEADER
         group.leader = newLeader
+        log.info("그룹장 양도: groupId={}, from={}, to={}", groupId, userId, newLeaderId)
     }
 
     @Transactional

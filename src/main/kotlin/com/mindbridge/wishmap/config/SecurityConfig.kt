@@ -38,16 +38,12 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}/comments").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/place-stats").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/categories").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/place-categories").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
 
                     // 인프라 / 개발 도구
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/health", "/actuator/health").permitAll()
-
-                    // 관리자
-                    .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                     .anyRequest().authenticated()
             }
