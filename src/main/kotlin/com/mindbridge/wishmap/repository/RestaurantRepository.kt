@@ -73,6 +73,21 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         memberIds: List<Long>, priceRange: PriceRange, pageable: Pageable
     ): Page<Restaurant>
 
+    // 같은 카테고리 + 근접 위치(bounds)로 기존 장소 찾기 (커스텀 장소 중복 방지)
+    @Query("""
+        SELECT r FROM Restaurant r
+        WHERE r.placeCategoryId = :placeCategoryId
+        AND r.lat BETWEEN :minLat AND :maxLat
+        AND r.lng BETWEEN :minLng AND :maxLng
+        AND r.naverPlaceId IS NULL
+        ORDER BY r.createdAt DESC
+    """)
+    fun findNearbyCustomByCategory(
+        placeCategoryId: Long,
+        minLat: Double, maxLat: Double,
+        minLng: Double, maxLng: Double
+    ): List<Restaurant>
+
     // 필터 + 검색 + 태그 + 최신순 정렬 (list 탭용)
     @Query("""
         SELECT DISTINCT r FROM Restaurant r

@@ -31,6 +31,7 @@ class PlaceCategoryController(
                     name = category.name,
                     icon = category.icon,
                     hasPriceRange = category.hasPriceRange,
+                    customOnly = category.customOnly,
                     tagGroups = tagGroups
                 )
             }

@@ -5,6 +5,7 @@ data class PlaceCategoryResponse(
     val name: String,
     val icon: String?,
     val hasPriceRange: Boolean,
+    val customOnly: Boolean,
     val tagGroups: List<TagGroupResponse>
 )
 

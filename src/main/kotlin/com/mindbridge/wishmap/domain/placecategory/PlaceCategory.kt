@@ -24,6 +24,9 @@ class PlaceCategory(
     @Column(nullable = false)
     val active: Boolean = true,
 
+    @Column(name = "custom_only", nullable = false)
+    val customOnly: Boolean = false,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

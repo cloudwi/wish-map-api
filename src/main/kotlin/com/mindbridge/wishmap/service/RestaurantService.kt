@@ -389,6 +389,18 @@ class RestaurantService(
                 isNew = true
                 createRestaurantFromQuickVisit(request, user)
             }
+        } else if (request.placeCategoryId != null) {
+            // 커스텀 장소: 같은 카테고리 + 100m 이내 기존 장소 재사용
+            val radiusDeg = VISIT_DISTANCE_LIMIT_METERS / 111000.0
+            val nearby = restaurantRepository.findNearbyCustomByCategory(
+                request.placeCategoryId,
+                request.lat - radiusDeg, request.lat + radiusDeg,
+                request.lng - radiusDeg, request.lng + radiusDeg
+            ).firstOrNull { haversineDistance(request.lat, request.lng, it.lat, it.lng) <= VISIT_DISTANCE_LIMIT_METERS }
+            nearby ?: run {
+                isNew = true
+                createRestaurantFromQuickVisit(request, user)
+            }
         } else {
             isNew = true
             createRestaurantFromQuickVisit(request, user)
