@@ -30,16 +30,19 @@ class RestaurantController(
         @RequestParam(required = false) sortBy: String?,
         @RequestParam(required = false) priceRange: String?,
         @RequestParam(required = false) placeCategoryId: Long?,
-        @RequestParam(required = false) tag: String?,
+        @RequestParam(required = false) tags: List<String>?,
+        @RequestParam(required = false) tag: String?, // TODO: 하위 호환 - 구버전 앱 지원, 추후 제거
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> {
         val parsedPriceRange = priceRange?.let {
             try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
         }
+        // 하위 호환: 구버전 앱의 tag 파라미터를 tags로 병합
+        val effectiveTags = tags ?: tag?.let { listOf(it) }
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
             ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, pageable))
         } else {
-            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, tag, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
         }
     }
 

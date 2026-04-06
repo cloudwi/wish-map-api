@@ -81,7 +81,7 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
-        AND (:tag IS NULL OR ct.tag = :tag)
+        AND (:tags IS NULL OR ct.tag IN :tags)
         ORDER BY r.createdAt DESC
     """,
     countQuery = """
@@ -91,13 +91,13 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
-        AND (:tag IS NULL OR ct.tag = :tag)
+        AND (:tags IS NULL OR ct.tag IN :tags)
     """)
     fun findWithFilters(
         placeCategoryId: Long?,
         search: String?,
         priceRange: PriceRange?,
-        tag: String?,
+        tags: List<String>?,
         pageable: Pageable
     ): Page<Restaurant>
 
@@ -110,7 +110,7 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
-        AND (:tag IS NULL OR ct.tag = :tag)
+        AND (:tags IS NULL OR ct.tag IN :tags)
         GROUP BY r
         ORDER BY COUNT(DISTINCT v) DESC, r.createdAt DESC
     """,
@@ -121,13 +121,13 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
-        AND (:tag IS NULL OR ct.tag = :tag)
+        AND (:tags IS NULL OR ct.tag IN :tags)
     """)
     fun findWithFiltersSortByVisits(
         placeCategoryId: Long?,
         search: String?,
         priceRange: PriceRange?,
-        tag: String?,
+        tags: List<String>?,
         pageable: Pageable
     ): Page<Restaurant>
 }
