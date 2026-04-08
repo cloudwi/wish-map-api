@@ -37,5 +37,7 @@ class Notification(
 enum class NotificationType {
     GROUP_LOCATION_CHANGED,
     GROUP_INVITE,
-    FRIEND_REQUEST
+    FRIEND_REQUEST,
+    LUNCH_VOTE_CREATED,
+    LUNCH_VOTE_CLOSED
 }
