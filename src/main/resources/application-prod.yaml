@@ -21,6 +21,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 7
+    repair-on-migrate: true
 
 logging:
   level:
