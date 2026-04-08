@@ -283,11 +283,17 @@ class RestaurantService(
         val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
+        val restaurantIds = page.content.map { it.id }
+        val lastVisitMap = if (restaurantIds.isNotEmpty()) {
+            visitRepository.findLastVisitDatesByUserAndRestaurantIds(user, restaurantIds)
+                .associate { (it[0] as Long) to (it[1] as java.time.LocalDateTime) }
+        } else emptyMap()
         return page.map { restaurant ->
             restaurant.toListResponse(
                 likeCount = likeCountMap[restaurant.id] ?: 0L,
                 visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id]
+                weeklyChampion = weeklyChampionMap[restaurant.id],
+                lastVisitedAt = lastVisitMap[restaurant.id]
             )
         }
     }

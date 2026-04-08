@@ -45,6 +45,14 @@ interface VisitRepository : JpaRepository<Visit, Long> {
     """)
     fun countByRestaurantAndUsers(restaurant: Restaurant, users: List<User>): List<Array<Any>>
 
+    @Query("""
+        SELECT v.restaurant.id, MAX(v.createdAt)
+        FROM Visit v
+        WHERE v.user = :user AND v.restaurant.id IN :restaurantIds
+        GROUP BY v.restaurant.id
+    """)
+    fun findLastVisitDatesByUserAndRestaurantIds(user: User, restaurantIds: List<Long>): List<Array<Any>>
+
     fun deleteAllByUser(user: User)
 
     // 여러 식당의 최다 보고 가격대 (배치 조회)

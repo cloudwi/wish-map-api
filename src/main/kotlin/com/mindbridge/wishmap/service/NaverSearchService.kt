@@ -39,8 +39,8 @@ class NaverSearchService(
                 .block()
 
             val item = (result?.get("items") as? List<*>)?.firstOrNull() as? Map<*, *>
-            // thumbnail은 b150(저화질) → m1000으로 교체하여 고화질 사용
-            item?.get("thumbnail")?.toString()?.replace("type=b150", "type=m1000")
+            // thumbnail은 b150(저화질) → b400으로 교체하여 고화질 사용
+            item?.get("thumbnail")?.toString()?.replace("type=b150", "type=b400")
         } catch (e: Exception) {
             log.debug("이미지 검색 실패: query={}", query)
             null

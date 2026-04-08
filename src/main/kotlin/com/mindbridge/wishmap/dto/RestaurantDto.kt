@@ -45,7 +45,8 @@ data class RestaurantListResponse(
     val visitCount: Long,
     val weeklyChampion: String? = null,
     val priceRange: String?,
-    val placeCategoryId: Long?
+    val placeCategoryId: Long?,
+    val lastVisitedAt: java.time.LocalDateTime? = null
 )
 
 data class RestaurantDetailResponse(
@@ -176,7 +177,12 @@ data class PlaceStatsResponse(
     val recentReviews: List<ReviewSummary>
 )
 
-fun Restaurant.toListResponse(likeCount: Long, visitCount: Long, weeklyChampion: String? = null) = RestaurantListResponse(
+fun Restaurant.toListResponse(
+    likeCount: Long,
+    visitCount: Long,
+    weeklyChampion: String? = null,
+    lastVisitedAt: java.time.LocalDateTime? = null
+) = RestaurantListResponse(
     id = id,
     name = name,
     lat = lat,
@@ -188,5 +194,6 @@ fun Restaurant.toListResponse(likeCount: Long, visitCount: Long, weeklyChampion:
     visitCount = visitCount,
     weeklyChampion = weeklyChampion,
     priceRange = priceRange?.name,
-    placeCategoryId = placeCategoryId
+    placeCategoryId = placeCategoryId,
+    lastVisitedAt = lastVisitedAt
 )
