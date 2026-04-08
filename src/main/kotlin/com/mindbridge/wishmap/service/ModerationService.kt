@@ -19,6 +19,8 @@ class ModerationService(
     private val userRepository: UserRepository
 ) {
 
+    private val log = org.slf4j.LoggerFactory.getLogger(ModerationService::class.java)
+
     @Transactional
     fun createReport(userId: Long, request: CreateReportRequest): ReportResponse {
         val reporter = userRepository.findById(userId)
@@ -36,6 +38,7 @@ class ModerationService(
             description = request.description
         )
         reportRepository.save(report)
+        log.warn("신고 접수: reporterId={}, targetType={}, targetId={}, reason={}", userId, request.targetType, request.targetId, request.reason)
 
         return ReportResponse(
             id = report.id,
@@ -64,6 +67,7 @@ class ModerationService(
 
         val blockedUser = BlockedUser(blocker = blocker, blocked = blocked)
         blockedUserRepository.save(blockedUser)
+        log.info("사용자 차단: blockerId={}, blockedId={}", blockerId, blockedId)
 
         return BlockedUserResponse(
             id = blockedUser.id,

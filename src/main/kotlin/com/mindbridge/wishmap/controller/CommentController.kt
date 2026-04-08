@@ -24,7 +24,7 @@ class CommentController(
     fun getComments(
         @PathVariable restaurantId: Long,
         @AuthenticationPrincipal user: UserPrincipal?,
-        @PageableDefault(size = 20) pageable: Pageable
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
     ): ResponseEntity<Page<CommentResponse>> {
         val comments = commentService.getComments(restaurantId, user?.id, pageable)
         return ResponseEntity.ok(comments)

@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
 interface VisitRepository : JpaRepository<Visit, Long> {
-    fun existsByRestaurantAndUser(restaurant: Restaurant, user: User): Boolean
     fun existsByRestaurantAndUserAndCreatedAtBetween(
         restaurant: Restaurant,
         user: User,
@@ -22,35 +21,29 @@ interface VisitRepository : JpaRepository<Visit, Long> {
     @Query("SELECT AVG(v.rating) FROM Visit v WHERE v.restaurant = :restaurant AND v.rating IS NOT NULL")
     fun findAvgRatingByRestaurant(restaurant: Restaurant): Double?
 
-    // 주간 방문왕: 해당 주(월~일) 동안 가장 많이 방문한 유저의 닉네임
-    @Query("""
-        SELECT v.user.nickname 
-        FROM Visit v 
-        WHERE v.restaurant = :restaurant 
-          AND v.createdAt >= :weekStart 
-          AND v.createdAt < :weekEnd
-        GROUP BY v.user
-        ORDER BY COUNT(v) DESC
-        LIMIT 1
-    """)
-    fun findWeeklyChampion(
-        restaurant: Restaurant,
-        weekStart: LocalDateTime,
-        weekEnd: LocalDateTime
-    ): String?
-
-    // 모든 식당의 주간 방문왕 (배치 조회용)
+    // 지정된 식당들의 주간 방문왕 (배치 조회용)
     @Query("""
         SELECT v.restaurant.id, v.user.nickname, COUNT(v) as cnt
         FROM Visit v
-        WHERE v.createdAt >= :weekStart AND v.createdAt < :weekEnd
+        WHERE v.restaurant.id IN :restaurantIds
+          AND v.createdAt >= :weekStart AND v.createdAt < :weekEnd
         GROUP BY v.restaurant.id, v.user
         ORDER BY v.restaurant.id, cnt DESC
     """)
-    fun findAllWeeklyChampions(
+    fun findWeeklyChampionsByRestaurantIds(
+        restaurantIds: List<Long>,
         weekStart: LocalDateTime,
         weekEnd: LocalDateTime
     ): List<Array<Any>>
+
+    // 특정 식당에서 유저별 방문 횟수 (배치 조회)
+    @Query("""
+        SELECT v.user.id, COUNT(v)
+        FROM Visit v
+        WHERE v.restaurant = :restaurant AND v.user IN :users
+        GROUP BY v.user.id
+    """)
+    fun countByRestaurantAndUsers(restaurant: Restaurant, users: List<User>): List<Array<Any>>
 
     fun deleteAllByUser(user: User)
 

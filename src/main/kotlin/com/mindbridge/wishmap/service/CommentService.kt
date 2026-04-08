@@ -39,11 +39,12 @@ class CommentService(
 
         val filtered = page.content.filter { it.user.id !in blockedIds }
 
-        // 유저별 방문 횟수 배치 조회
-        val userIds = filtered.map { it.user }.distinct()
-        val visitCountMap = userIds.associate { user ->
-            user.id to visitRepository.countByRestaurantAndUser(restaurant, user)
-        }
+        // 유저별 방문 횟수 배치 조회 (단일 쿼리)
+        val distinctUsers = filtered.map { it.user }.distinct()
+        val visitCountMap = if (distinctUsers.isNotEmpty()) {
+            visitRepository.countByRestaurantAndUsers(restaurant, distinctUsers)
+                .associate { row -> (row[0] as Long) to (row[1] as Long) }
+        } else emptyMap()
 
         val responses = filtered.map { it.toResponse(currentUserId, visitCountMap[it.user.id] ?: 0) }
         return org.springframework.data.domain.PageImpl(responses, pageable, page.totalElements)
