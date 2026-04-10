@@ -3,8 +3,6 @@ package com.mindbridge.wishmap.service
 import com.mindbridge.wishmap.domain.comment.Comment
 import com.mindbridge.wishmap.domain.comment.CommentImage
 import com.mindbridge.wishmap.domain.comment.CommentTag
-import com.mindbridge.wishmap.domain.restaurant.Like
-import com.mindbridge.wishmap.domain.restaurant.LikeGroup
 import com.mindbridge.wishmap.domain.restaurant.PriceRange
 import com.mindbridge.wishmap.domain.restaurant.Restaurant
 import com.mindbridge.wishmap.domain.restaurant.RestaurantImage
@@ -31,8 +29,6 @@ class RestaurantService(
     private val log: org.slf4j.Logger = org.slf4j.LoggerFactory.getLogger(RestaurantService::class.java),
     private val restaurantRepository: RestaurantRepository,
     private val userRepository: UserRepository,
-    private val likeRepository: LikeRepository,
-    private val likeGroupRepository: LikeGroupRepository,
     private val commentRepository: CommentRepository,
     private val visitRepository: VisitRepository,
     private val naverSearchService: NaverSearchService
@@ -41,7 +37,6 @@ class RestaurantService(
     companion object {
         private const val VISIT_DISTANCE_LIMIT_METERS = 100.0
         private const val EARTH_RADIUS_METERS = 6_371_000.0
-        private const val DEFAULT_GROUP_NAME = "기본"
     }
 
     @Transactional(readOnly = true)
@@ -57,14 +52,14 @@ class RestaurantService(
         val page = restaurantRepository.findByLocationBoundsWithFilters(
             minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, pageable
         )
-        val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
+        val lastVisitMap = batchLastVisitedAt(page.content)
         return page.map { restaurant ->
             restaurant.toListResponse(
-                likeCount = likeCountMap[restaurant.id] ?: 0L,
                 visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id]
+                weeklyChampion = weeklyChampionMap[restaurant.id],
+                lastVisitedAt = lastVisitMap[restaurant.id]
             )
         }
     }
@@ -82,20 +77,20 @@ class RestaurantService(
         val effectiveSearch = search?.takeIf { it.isNotBlank() }
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
 
-        val page = if (sort == "visits") {
-            restaurantRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
-        } else {
-            restaurantRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+        val page = when (sort) {
+            "visits" -> restaurantRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            "recentVisit" -> restaurantRepository.findWithFiltersSortByRecentVisit(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            else -> restaurantRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
         }
 
-        val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
+        val lastVisitMap = batchLastVisitedAt(page.content)
         return page.map { restaurant ->
             restaurant.toListResponse(
-                likeCount = likeCountMap[restaurant.id] ?: 0L,
                 visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id]
+                weeklyChampion = weeklyChampionMap[restaurant.id],
+                lastVisitedAt = lastVisitMap[restaurant.id]
             )
         }
     }
@@ -109,25 +104,27 @@ class RestaurantService(
         val page = restaurantRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
+        val lastVisitMap = batchLastVisitedAt(page.content)
         return page.map { restaurant ->
             restaurant.toListResponse(
-                likeCount = 0L,
                 visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id]
+                weeklyChampion = weeklyChampionMap[restaurant.id],
+                lastVisitedAt = lastVisitMap[restaurant.id]
             )
         }
-    }
-
-    private fun batchLikeCounts(restaurants: List<Restaurant>): Map<Long, Long> {
-        if (restaurants.isEmpty()) return emptyMap()
-        return restaurantRepository.countLikesByRestaurants(restaurants)
-            .associate { row -> (row[0] as Long) to (row[1] as Long) }
     }
 
     private fun batchVisitCounts(restaurants: List<Restaurant>): Map<Long, Long> {
         if (restaurants.isEmpty()) return emptyMap()
         return restaurantRepository.countVisitsByRestaurants(restaurants)
             .associate { row -> (row[0] as Long) to (row[1] as Long) }
+    }
+
+    private fun batchLastVisitedAt(restaurants: List<Restaurant>): Map<Long, java.time.LocalDateTime> {
+        if (restaurants.isEmpty()) return emptyMap()
+        val ids = restaurants.map { it.id }
+        return visitRepository.findLastVisitDatesByRestaurantIds(ids)
+            .associate { row -> (row[0] as Long) to (row[1] as java.time.LocalDateTime) }
     }
 
     // 이번 주 월요일~일요일 시간 범위 계산 (한국 시간 기준)
@@ -160,14 +157,12 @@ class RestaurantService(
         val restaurant = restaurantRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Restaurant not found: $id") }
 
-        val likeCount = likeRepository.countDistinctUsersByRestaurant(restaurant)
         val visitCount = visitRepository.countByRestaurant(restaurant)
         val commentCount = commentRepository.countByRestaurantAndIsDeletedFalse(restaurant)
 
+        val lastVisit = visitRepository.findFirstByRestaurantOrderByCreatedAtDesc(restaurant)
         val user = userId?.let { userRepository.findById(it).orElse(null) }
         val today = LocalDate.now()
-        val isLiked = user != null &&
-            likeRepository.findByLikeGroup_UserAndRestaurant(user, restaurant).isNotEmpty()
         val isVisited = user != null &&
             visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
                 restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
@@ -188,13 +183,12 @@ class RestaurantService(
                 nickname = restaurant.suggestedBy.nickname,
                 profileImage = restaurant.suggestedBy.profileImage
             ),
-            likeCount = likeCount,
             visitCount = visitCount,
             commentCount = commentCount,
-            isLiked = isLiked,
             isVisited = isVisited,
             priceRange = restaurant.priceRange?.name,
             placeCategoryId = restaurant.placeCategoryId,
+            lastVisitedAt = lastVisit?.createdAt,
             createdAt = restaurant.createdAt,
             updatedAt = restaurant.updatedAt
         )
@@ -280,7 +274,6 @@ class RestaurantService(
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
         val page = restaurantRepository.findBySuggestedBy(user, pageable)
-        val likeCountMap = batchLikeCounts(page.content)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         val restaurantIds = page.content.map { it.id }
@@ -290,97 +283,11 @@ class RestaurantService(
         } else emptyMap()
         return page.map { restaurant ->
             restaurant.toListResponse(
-                likeCount = likeCountMap[restaurant.id] ?: 0L,
                 visitCount = visitCountMap[restaurant.id] ?: 0L,
                 weeklyChampion = weeklyChampionMap[restaurant.id],
                 lastVisitedAt = lastVisitMap[restaurant.id]
             )
         }
-    }
-
-    // --- 컬렉션 기능 ---
-
-    private fun ensureDefaultGroup(user: User): LikeGroup {
-        return likeGroupRepository.findByUserAndName(user, DEFAULT_GROUP_NAME)
-            .orElseGet { likeGroupRepository.save(LikeGroup(user = user, name = DEFAULT_GROUP_NAME)) }
-    }
-
-    @Transactional
-    fun getCollections(userId: Long, restaurantId: Long?): List<LikeGroupResponse> {
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        ensureDefaultGroup(user)
-        val groups = likeGroupRepository.findByUser(user)
-
-        val restaurant = restaurantId?.let {
-            restaurantRepository.findById(it).orElse(null)
-        }
-
-        return groups.map { group ->
-            val hasRestaurant = if (restaurant != null) {
-                group.likes.any { it.restaurant.id == restaurant.id }
-            } else false
-
-            LikeGroupResponse(
-                id = group.id,
-                name = group.name,
-                restaurantCount = group.likes.size.toLong(),
-                hasRestaurant = hasRestaurant
-            )
-        }
-    }
-
-    @Transactional
-    fun createCollection(userId: Long, name: String): LikeGroupResponse {
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        if (likeGroupRepository.existsByUserAndName(user, name)) {
-            throw DuplicateResourceException("이미 같은 이름의 컬렉션이 있습니다")
-        }
-
-        val group = likeGroupRepository.save(LikeGroup(user = user, name = name))
-        return LikeGroupResponse(
-            id = group.id,
-            name = group.name,
-            restaurantCount = 0L,
-            hasRestaurant = false
-        )
-    }
-
-    @Transactional
-    fun updateRestaurantCollections(
-        restaurantId: Long,
-        userId: Long,
-        groupIds: List<Long>
-    ): CollectionToggleResponse {
-        val restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow { ResourceNotFoundException("Restaurant not found: $restaurantId") }
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        val existingLikes = likeRepository.findByLikeGroup_UserAndRestaurant(user, restaurant)
-        val existingGroupIds = existingLikes.map { it.likeGroup.id }.toSet()
-        val targetGroupIds = groupIds.toSet()
-
-        // 제거: targetGroupIds에 없는 기존 좋아요
-        existingLikes.filter { it.likeGroup.id !in targetGroupIds }.forEach {
-            likeRepository.delete(it)
-        }
-
-        // 추가: 기존에 없는 targetGroupIds
-        val userGroups = likeGroupRepository.findByUser(user).associateBy { it.id }
-        targetGroupIds.filter { it !in existingGroupIds }.forEach { groupId ->
-            val group = userGroups[groupId]
-                ?: throw ResourceNotFoundException("Collection not found: $groupId")
-            likeRepository.save(Like(restaurant = restaurant, likeGroup = group))
-        }
-
-        val likeCount = likeRepository.countDistinctUsersByRestaurant(restaurant)
-        val isLiked = targetGroupIds.isNotEmpty()
-
-        return CollectionToggleResponse(isLiked = isLiked, likeCount = likeCount)
     }
 
     @Transactional
@@ -516,29 +423,4 @@ class RestaurantService(
         )
     }
 
-    @Transactional(readOnly = true)
-    fun getCollectionRestaurants(userId: Long, groupId: Long, pageable: Pageable): Page<RestaurantListResponse> {
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-        val group = likeGroupRepository.findById(groupId)
-            .orElseThrow { ResourceNotFoundException("Collection not found: $groupId") }
-
-        if (group.user.id != user.id) {
-            throw IllegalArgumentException("본인의 컬렉션만 조회할 수 있습니다")
-        }
-
-        val page = likeRepository.findByLikeGroup(group, pageable)
-        val restaurants = page.content.map { it.restaurant }
-        val likeCountMap = batchLikeCounts(restaurants)
-        val visitCountMap = batchVisitCounts(restaurants)
-        val weeklyChampionMap = batchWeeklyChampions(restaurants)
-
-        return page.map { like ->
-            like.restaurant.toListResponse(
-                likeCount = likeCountMap[like.restaurant.id] ?: 0L,
-                visitCount = visitCountMap[like.restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[like.restaurant.id]
-            )
-        }
-    }
 }

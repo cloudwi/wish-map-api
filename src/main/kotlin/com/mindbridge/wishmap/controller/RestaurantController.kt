@@ -91,35 +91,4 @@ class RestaurantController(
     ): ResponseEntity<PlaceStatsResponse> =
         ResponseEntity.ok(restaurantService.getPlaceStats(naverPlaceId, user?.id))
 
-    // --- 컬렉션 ---
-
-    @GetMapping("/collections")
-    fun getCollections(
-        @AuthenticationPrincipal user: UserPrincipal,
-        @RequestParam(required = false) restaurantId: Long?
-    ): ResponseEntity<List<LikeGroupResponse>> =
-        ResponseEntity.ok(restaurantService.getCollections(user.id, restaurantId))
-
-    @PostMapping("/collections")
-    fun createCollection(
-        @AuthenticationPrincipal user: UserPrincipal,
-        @Valid @RequestBody request: LikeGroupCreateRequest
-    ): ResponseEntity<LikeGroupResponse> =
-        ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.createCollection(user.id, request.name))
-
-    @GetMapping("/collections/{groupId}/restaurants")
-    fun getCollectionRestaurants(
-        @AuthenticationPrincipal user: UserPrincipal,
-        @PathVariable groupId: Long,
-        @PageableDefault(size = 20) pageable: Pageable
-    ): ResponseEntity<Page<RestaurantListResponse>> =
-        ResponseEntity.ok(restaurantService.getCollectionRestaurants(user.id, groupId, pageable))
-
-    @PutMapping("/{id}/collections")
-    fun updateRestaurantCollections(
-        @PathVariable id: Long,
-        @AuthenticationPrincipal user: UserPrincipal,
-        @RequestBody request: CollectionToggleRequest
-    ): ResponseEntity<CollectionToggleResponse> =
-        ResponseEntity.ok(restaurantService.updateRestaurantCollections(id, user.id, request.groupIds))
 }

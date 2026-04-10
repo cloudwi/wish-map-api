@@ -41,8 +41,5 @@ class Restaurant(
     val images: MutableList<RestaurantImage> = mutableListOf(),
 
     @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val likes: MutableList<Like> = mutableListOf(),
-
-    @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
     val visits: MutableList<Visit> = mutableListOf()
 ) : BaseEntity()

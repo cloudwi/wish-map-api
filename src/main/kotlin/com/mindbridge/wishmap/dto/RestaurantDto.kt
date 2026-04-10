@@ -41,7 +41,6 @@ data class RestaurantListResponse(
     val naverPlaceId: String?,
     val category: String?,
     val thumbnailImage: String?,
-    val likeCount: Long,
     val visitCount: Long,
     val weeklyChampion: String? = null,
     val priceRange: String?,
@@ -60,13 +59,12 @@ data class RestaurantDetailResponse(
     val thumbnailImage: String?,
     val images: List<String>,
     val suggestedBy: UserSummary,
-    val likeCount: Long,
     val visitCount: Long,
     val commentCount: Long,
-    val isLiked: Boolean,
     val isVisited: Boolean,
     val priceRange: String?,
     val placeCategoryId: Long?,
+    val lastVisitedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
@@ -87,28 +85,6 @@ data class VisitVerifyRequest(
     @field:DecimalMin(value = "-180.0", message = "유효한 경도 값이 아닙니다")
     @field:DecimalMax(value = "180.0", message = "유효한 경도 값이 아닙니다")
     val lng: Double
-)
-
-data class LikeGroupResponse(
-    val id: Long,
-    val name: String,
-    val restaurantCount: Long,
-    val hasRestaurant: Boolean
-)
-
-data class LikeGroupCreateRequest(
-    @field:NotBlank(message = "그룹 이름은 필수입니다")
-    @field:Size(max = 100, message = "그룹 이름은 100자 이하여야 합니다")
-    val name: String
-)
-
-data class CollectionToggleRequest(
-    val groupIds: List<Long>
-)
-
-data class CollectionToggleResponse(
-    val isLiked: Boolean,
-    val likeCount: Long
 )
 
 data class QuickVisitRequest(
@@ -179,7 +155,6 @@ data class PlaceStatsResponse(
 )
 
 fun Restaurant.toListResponse(
-    likeCount: Long,
     visitCount: Long,
     weeklyChampion: String? = null,
     lastVisitedAt: java.time.LocalDateTime? = null
@@ -191,7 +166,6 @@ fun Restaurant.toListResponse(
     naverPlaceId = naverPlaceId,
     category = category,
     thumbnailImage = thumbnailImage,
-    likeCount = likeCount,
     visitCount = visitCount,
     weeklyChampion = weeklyChampion,
     priceRange = priceRange?.name,

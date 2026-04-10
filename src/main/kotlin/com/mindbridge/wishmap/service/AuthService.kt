@@ -12,8 +12,6 @@ import com.mindbridge.wishmap.repository.CommentRepository
 import com.mindbridge.wishmap.repository.FriendRepository
 import com.mindbridge.wishmap.repository.GroupMemberRepository
 import com.mindbridge.wishmap.repository.GroupRepository
-import com.mindbridge.wishmap.repository.LikeGroupRepository
-import com.mindbridge.wishmap.repository.LikeRepository
 import com.mindbridge.wishmap.repository.NotificationRepository
 import com.mindbridge.wishmap.repository.ReportRepository
 import com.mindbridge.wishmap.repository.SocialAccountRepository
@@ -34,8 +32,6 @@ class AuthService(
     private val oAuthService: OAuthService,
     private val jwtTokenProvider: JwtTokenProvider,
     private val notificationRepository: NotificationRepository,
-    private val likeRepository: LikeRepository,
-    private val likeGroupRepository: LikeGroupRepository,
     private val visitRepository: VisitRepository,
     private val commentRepository: CommentRepository,
     private val groupMemberRepository: GroupMemberRepository,
@@ -123,13 +119,6 @@ class AuthService(
 
         // 알림 삭제
         notificationRepository.deleteAllByUserId(userId)
-
-        // 좋아요 → 컬렉션 삭제
-        val likeGroups = likeGroupRepository.findByUser(user)
-        if (likeGroups.isNotEmpty()) {
-            likeRepository.deleteAllByLikeGroupIn(likeGroups)
-            likeGroupRepository.deleteAllByUser(user)
-        }
 
         // 방문 기록 삭제
         visitRepository.deleteAllByUser(user)

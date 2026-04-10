@@ -55,6 +55,15 @@ interface VisitRepository : JpaRepository<Visit, Long> {
 
     fun findFirstByRestaurantOrderByCreatedAtDesc(restaurant: Restaurant): Visit?
 
+    // 여러 식당의 마지막 방문일 (배치 조회)
+    @Query("""
+        SELECT v.restaurant.id, MAX(v.createdAt)
+        FROM Visit v
+        WHERE v.restaurant.id IN :restaurantIds
+        GROUP BY v.restaurant.id
+    """)
+    fun findLastVisitDatesByRestaurantIds(restaurantIds: List<Long>): List<Array<Any>>
+
     fun deleteAllByUser(user: User)
 
     // 여러 식당의 최다 보고 가격대 (배치 조회)

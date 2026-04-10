@@ -27,14 +27,6 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         pageable: Pageable
     ): Page<Restaurant>
 
-    @Query("""
-        SELECT r.id, COUNT(DISTINCT l.likeGroup.user.id) FROM Restaurant r
-        LEFT JOIN Like l ON l.restaurant = r
-        WHERE r IN :restaurants
-        GROUP BY r.id
-    """)
-    fun countLikesByRestaurants(restaurants: List<Restaurant>): List<Array<Any>>
-
     fun findBySuggestedBy(user: User, pageable: Pageable): Page<Restaurant>
 
     fun existsByNaverPlaceId(naverPlaceId: String): Boolean
@@ -127,6 +119,36 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         AND (:tags IS NULL OR ct.tag IN :tags)
     """)
     fun findWithFiltersSortByVisits(
+        placeCategoryId: Long?,
+        search: String?,
+        priceRange: PriceRange?,
+        tags: List<String>?,
+        pageable: Pageable
+    ): Page<Restaurant>
+
+    // 필터 + 검색 + 태그 + 최근 방문 인증 순 (list 탭용)
+    @Query("""
+        SELECT r FROM Restaurant r
+        LEFT JOIN Visit v ON v.restaurant = r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        LEFT JOIN CommentTag ct ON ct.comment = c
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:tags IS NULL OR ct.tag IN :tags)
+        GROUP BY r
+        ORDER BY MAX(v.createdAt) DESC NULLS LAST, r.createdAt DESC
+    """,
+    countQuery = """
+        SELECT COUNT(DISTINCT r) FROM Restaurant r
+        LEFT JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        LEFT JOIN CommentTag ct ON ct.comment = c
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:tags IS NULL OR ct.tag IN :tags)
+    """)
+    fun findWithFiltersSortByRecentVisit(
         placeCategoryId: Long?,
         search: String?,
         priceRange: PriceRange?,
