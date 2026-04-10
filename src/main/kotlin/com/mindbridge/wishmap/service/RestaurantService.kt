@@ -472,10 +472,19 @@ class RestaurantService(
     @Transactional(readOnly = true)
     fun getPlaceStats(naverPlaceId: String, userId: Long? = null): PlaceStatsResponse {
         val restaurant = restaurantRepository.findByNaverPlaceId(naverPlaceId)
-            ?: throw ResourceNotFoundException("Place not found: $naverPlaceId")
+            ?: return PlaceStatsResponse(
+                restaurantId = 0,
+                visitCount = 0,
+                avgRating = null,
+                visitedToday = false,
+                priceRange = null,
+                placeCategoryId = null,
+                recentReviews = emptyList()
+            )
 
         val visitCount = visitRepository.countByRestaurant(restaurant)
         val avgRating = visitRepository.findAvgRatingByRestaurant(restaurant)
+        val lastVisit = visitRepository.findFirstByRestaurantOrderByCreatedAtDesc(restaurant)
         val recentComments = commentRepository
             .findTop3ByRestaurantAndIsDeletedFalseOrderByCreatedAtDesc(restaurant)
 
@@ -502,7 +511,8 @@ class RestaurantService(
                     tags = comment.tags.map { it.tag },
                     createdAt = comment.createdAt
                 )
-            }
+            },
+            lastVisitedAt = lastVisit?.createdAt
         )
     }
 

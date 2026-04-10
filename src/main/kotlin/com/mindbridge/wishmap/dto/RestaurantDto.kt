@@ -174,7 +174,8 @@ data class PlaceStatsResponse(
     val visitedToday: Boolean,
     val priceRange: String?,
     val placeCategoryId: Long?,
-    val recentReviews: List<ReviewSummary>
+    val recentReviews: List<ReviewSummary>,
+    val lastVisitedAt: LocalDateTime? = null
 )
 
 fun Restaurant.toListResponse(
