@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDateTime
 
 interface RestaurantRepository : JpaRepository<Restaurant, Long> {
 
@@ -155,4 +156,32 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         tags: List<String>?,
         pageable: Pageable
     ): Page<Restaurant>
+
+    // 이번 주 방문 많은 장소 TOP N
+    @Query("""
+        SELECT r FROM Restaurant r
+        LEFT JOIN Visit v ON v.restaurant = r
+        WHERE v.createdAt >= :weekStart AND v.createdAt < :weekEnd
+        GROUP BY r
+        ORDER BY COUNT(v) DESC
+    """)
+    fun findWeeklyTopRestaurants(weekStart: LocalDateTime, weekEnd: LocalDateTime, pageable: Pageable): List<Restaurant>
+
+    // 누적 방문 많은 장소 TOP N
+    @Query("""
+        SELECT r FROM Restaurant r
+        LEFT JOIN Visit v ON v.restaurant = r
+        GROUP BY r
+        ORDER BY COUNT(v) DESC
+    """)
+    fun findPopularRestaurants(pageable: Pageable): List<Restaurant>
+
+    // 카테고리별 장소 수
+    @Query("""
+        SELECT r.placeCategoryId, COUNT(r)
+        FROM Restaurant r
+        WHERE r.placeCategoryId IS NOT NULL
+        GROUP BY r.placeCategoryId
+    """)
+    fun countByPlaceCategory(): List<Array<Any>>
 }

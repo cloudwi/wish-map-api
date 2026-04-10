@@ -84,6 +84,18 @@ class RestaurantController(
     ): ResponseEntity<QuickVisitResponse> =
         ResponseEntity.ok(restaurantService.quickVisit(user.id, request))
 
+    @GetMapping("/stats/weekly-top")
+    fun getWeeklyTop(): ResponseEntity<List<WeeklyTopRestaurant>> =
+        ResponseEntity.ok(restaurantService.getWeeklyTopRestaurants())
+
+    @GetMapping("/stats/popular")
+    fun getPopular(): ResponseEntity<List<PopularRestaurant>> =
+        ResponseEntity.ok(restaurantService.getPopularRestaurants())
+
+    @GetMapping("/stats/category-summary")
+    fun getCategorySummary(): ResponseEntity<List<CategorySummary>> =
+        ResponseEntity.ok(restaurantService.getCategorySummary())
+
     @GetMapping("/place-stats")
     fun getPlaceStats(
         @RequestParam naverPlaceId: String,

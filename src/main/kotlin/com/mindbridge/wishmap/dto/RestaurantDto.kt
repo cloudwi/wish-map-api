@@ -154,6 +154,30 @@ data class PlaceStatsResponse(
     val lastVisitedAt: LocalDateTime? = null
 )
 
+data class WeeklyTopRestaurant(
+    val id: Long,
+    val name: String,
+    val category: String?,
+    val thumbnailImage: String?,
+    val visitCount: Long,
+    val placeCategoryId: Long?
+)
+
+data class PopularRestaurant(
+    val id: Long,
+    val name: String,
+    val category: String?,
+    val thumbnailImage: String?,
+    val totalVisitCount: Long,
+    val placeCategoryId: Long?
+)
+
+data class CategorySummary(
+    val placeCategoryId: Long,
+    val name: String,
+    val restaurantCount: Long
+)
+
 fun Restaurant.toListResponse(
     visitCount: Long,
     weeklyChampion: String? = null,

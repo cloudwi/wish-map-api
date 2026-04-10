@@ -38,6 +38,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}/comments").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/place-stats").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/stats/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/place-categories").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
 

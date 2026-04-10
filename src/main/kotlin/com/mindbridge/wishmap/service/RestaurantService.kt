@@ -13,6 +13,7 @@ import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.*
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -373,6 +374,54 @@ class RestaurantService(
                 restaurant.priceRange = topPriceRange
                 restaurantRepository.save(restaurant)
             }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun getWeeklyTopRestaurants(limit: Int = 3): List<WeeklyTopRestaurant> {
+        val (weekStart, weekEnd) = getWeekRange()
+        val restaurants = restaurantRepository.findWeeklyTopRestaurants(
+            weekStart, weekEnd, PageRequest.of(0, limit)
+        )
+        val visitCountMap = batchVisitCounts(restaurants)
+        return restaurants.map { r ->
+            WeeklyTopRestaurant(
+                id = r.id,
+                name = r.name,
+                category = r.category,
+                thumbnailImage = r.thumbnailImage,
+                visitCount = visitCountMap[r.id] ?: 0L,
+                placeCategoryId = r.placeCategoryId
+            )
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun getPopularRestaurants(limit: Int = 5): List<PopularRestaurant> {
+        val restaurants = restaurantRepository.findPopularRestaurants(PageRequest.of(0, limit))
+        val visitCountMap = batchVisitCounts(restaurants)
+        return restaurants.map { r ->
+            PopularRestaurant(
+                id = r.id,
+                name = r.name,
+                category = r.category,
+                thumbnailImage = r.thumbnailImage,
+                totalVisitCount = visitCountMap[r.id] ?: 0L,
+                placeCategoryId = r.placeCategoryId
+            )
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun getCategorySummary(): List<CategorySummary> {
+        return restaurantRepository.countByPlaceCategory().map { row ->
+            val categoryId = row[0] as Long
+            val count = row[1] as Long
+            CategorySummary(
+                placeCategoryId = categoryId,
+                name = "",  // will be filled by frontend from cached categories
+                restaurantCount = count
+            )
         }
     }
 
