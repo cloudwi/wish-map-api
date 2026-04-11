@@ -179,7 +179,7 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
     // 필터 + 거리순 정렬 (list 탭용, native query)
     @Query(
         value = """
-            SELECT DISTINCT r.* FROM restaurants r
+            SELECT r.* FROM restaurants r
             WHERE (CAST(:placeCategoryId AS BIGINT) IS NULL OR r.place_category_id = CAST(:placeCategoryId AS BIGINT))
             AND (CAST(:search AS TEXT) IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%')))
             AND (CAST(:priceRange AS TEXT) IS NULL OR r.price_range = CAST(:priceRange AS TEXT))
