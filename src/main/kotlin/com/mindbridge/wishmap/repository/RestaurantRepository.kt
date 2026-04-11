@@ -176,26 +176,20 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
     """)
     fun findPopularRestaurants(pageable: Pageable): List<Restaurant>
 
-    // 필터 + 검색 + 태그 + 거리순 정렬 (list 탭용, native query)
+    // 필터 + 거리순 정렬 (list 탭용, native query)
     @Query(
         value = """
-            SELECT DISTINCT r.* FROM restaurant r
-            LEFT JOIN comment c ON c.restaurant_id = r.id AND c.is_deleted = false
-            LEFT JOIN comment_tag ct ON ct.comment_id = c.id
-            WHERE (:placeCategoryId IS NULL OR r.place_category_id = :placeCategoryId)
-            AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')))
-            AND (:priceRange IS NULL OR r.price_range = :priceRange)
-            AND (:tags IS NULL OR ct.tag IN (:tags))
+            SELECT DISTINCT r.* FROM restaurants r
+            WHERE (CAST(:placeCategoryId AS BIGINT) IS NULL OR r.place_category_id = CAST(:placeCategoryId AS BIGINT))
+            AND (CAST(:search AS TEXT) IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%')))
+            AND (CAST(:priceRange AS TEXT) IS NULL OR r.price_range = CAST(:priceRange AS TEXT))
             ORDER BY SQRT(POWER((r.lat - :userLat) * 111000, 2) + POWER((r.lng - :userLng) * 111000 * COS(RADIANS(:userLat)), 2)) ASC
         """,
         countQuery = """
-            SELECT COUNT(DISTINCT r.id) FROM restaurant r
-            LEFT JOIN comment c ON c.restaurant_id = r.id AND c.is_deleted = false
-            LEFT JOIN comment_tag ct ON ct.comment_id = c.id
-            WHERE (:placeCategoryId IS NULL OR r.place_category_id = :placeCategoryId)
-            AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')))
-            AND (:priceRange IS NULL OR r.price_range = :priceRange)
-            AND (:tags IS NULL OR ct.tag IN (:tags))
+            SELECT COUNT(*) FROM restaurants r
+            WHERE (CAST(:placeCategoryId AS BIGINT) IS NULL OR r.place_category_id = CAST(:placeCategoryId AS BIGINT))
+            AND (CAST(:search AS TEXT) IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%')))
+            AND (CAST(:priceRange AS TEXT) IS NULL OR r.price_range = CAST(:priceRange AS TEXT))
         """,
         nativeQuery = true
     )
@@ -203,7 +197,6 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         placeCategoryId: Long?,
         search: String?,
         priceRange: String?,
-        tags: List<String>?,
         userLat: Double,
         userLng: Double,
         pageable: Pageable

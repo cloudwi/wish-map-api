@@ -86,7 +86,7 @@ class RestaurantService(
             "distance" -> {
                 require(userLat != null && userLng != null) { "userLat and userLng are required for distance sort" }
                 restaurantRepository.findWithFiltersSortByDistance(
-                    placeCategoryId, effectiveSearch, priceRange?.name, effectiveTags, userLat, userLng, pageable
+                    placeCategoryId, effectiveSearch, priceRange?.name, userLat, userLng, pageable
                 )
             }
             else -> restaurantRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
