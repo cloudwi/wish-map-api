@@ -176,6 +176,39 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
     """)
     fun findPopularRestaurants(pageable: Pageable): List<Restaurant>
 
+    // 필터 + 검색 + 태그 + 거리순 정렬 (list 탭용, native query)
+    @Query(
+        value = """
+            SELECT DISTINCT r.* FROM restaurant r
+            LEFT JOIN comment c ON c.restaurant_id = r.id AND c.is_deleted = false
+            LEFT JOIN comment_tag ct ON ct.comment_id = c.id
+            WHERE (:placeCategoryId IS NULL OR r.place_category_id = :placeCategoryId)
+            AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')))
+            AND (:priceRange IS NULL OR r.price_range = :priceRange)
+            AND (:tags IS NULL OR ct.tag IN (:tags))
+            ORDER BY SQRT(POWER((r.lat - :userLat) * 111000, 2) + POWER((r.lng - :userLng) * 111000 * COS(RADIANS(:userLat)), 2)) ASC
+        """,
+        countQuery = """
+            SELECT COUNT(DISTINCT r.id) FROM restaurant r
+            LEFT JOIN comment c ON c.restaurant_id = r.id AND c.is_deleted = false
+            LEFT JOIN comment_tag ct ON ct.comment_id = c.id
+            WHERE (:placeCategoryId IS NULL OR r.place_category_id = :placeCategoryId)
+            AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')))
+            AND (:priceRange IS NULL OR r.price_range = :priceRange)
+            AND (:tags IS NULL OR ct.tag IN (:tags))
+        """,
+        nativeQuery = true
+    )
+    fun findWithFiltersSortByDistance(
+        placeCategoryId: Long?,
+        search: String?,
+        priceRange: String?,
+        tags: List<String>?,
+        userLat: Double,
+        userLng: Double,
+        pageable: Pageable
+    ): Page<Restaurant>
+
     // 카테고리별 장소 수
     @Query("""
         SELECT r.placeCategoryId, COUNT(r)

@@ -73,7 +73,9 @@ class RestaurantService(
         priceRange: PriceRange?,
         placeCategoryId: Long?,
         tags: List<String>?,
-        pageable: Pageable
+        pageable: Pageable,
+        userLat: Double? = null,
+        userLng: Double? = null
     ): Page<RestaurantListResponse> {
         val effectiveSearch = search?.takeIf { it.isNotBlank() }
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
@@ -81,6 +83,12 @@ class RestaurantService(
         val page = when (sort) {
             "visits" -> restaurantRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
             "recentVisit" -> restaurantRepository.findWithFiltersSortByRecentVisit(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            "distance" -> {
+                require(userLat != null && userLng != null) { "userLat and userLng are required for distance sort" }
+                restaurantRepository.findWithFiltersSortByDistance(
+                    placeCategoryId, effectiveSearch, priceRange?.name, effectiveTags, userLat, userLng, pageable
+                )
+            }
             else -> restaurantRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
         }
 

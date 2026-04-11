@@ -32,6 +32,8 @@ class RestaurantController(
         @RequestParam(required = false) placeCategoryId: Long?,
         @RequestParam(required = false) tags: List<String>?,
         @RequestParam(required = false) tag: String?, // TODO: 하위 호환 - 구버전 앱 지원, 추후 제거
+        @RequestParam(required = false) userLat: Double?,
+        @RequestParam(required = false) userLng: Double?,
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> {
         val parsedPriceRange = priceRange?.let {
@@ -42,7 +44,7 @@ class RestaurantController(
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
             ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, pageable))
         } else {
-            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable, userLat = userLat, userLng = userLng))
         }
     }
 
