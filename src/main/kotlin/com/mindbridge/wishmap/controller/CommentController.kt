@@ -20,7 +20,7 @@ class CommentController(
     private val commentService: CommentService
 ) {
 
-    @GetMapping("/restaurants/{restaurantId}/comments")
+    @GetMapping("/restaurants/{restaurantId}/comments", "/places/{restaurantId}/comments")
     fun getComments(
         @PathVariable restaurantId: Long,
         @AuthenticationPrincipal user: UserPrincipal?,
@@ -30,7 +30,7 @@ class CommentController(
         return ResponseEntity.ok(comments)
     }
 
-    @PostMapping("/restaurants/{restaurantId}/comments")
+    @PostMapping("/restaurants/{restaurantId}/comments", "/places/{restaurantId}/comments")
     fun createComment(
         @PathVariable restaurantId: Long,
         @AuthenticationPrincipal user: UserPrincipal,

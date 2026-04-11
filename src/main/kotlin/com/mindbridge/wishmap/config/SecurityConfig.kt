@@ -39,6 +39,11 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}/comments").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/place-stats").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/stats/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/places").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/places/{id}").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/places/{id}/comments").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/places/place-stats").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/places/stats/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/place-categories").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
 

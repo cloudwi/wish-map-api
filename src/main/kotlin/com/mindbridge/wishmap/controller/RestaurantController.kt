@@ -14,12 +14,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/v1/restaurants")
+@RequestMapping("/api/v1")
 class RestaurantController(
     private val restaurantService: RestaurantService
 ) {
 
-    @GetMapping
+    @GetMapping("/restaurants", "/places")
     fun getRestaurants(
         @RequestParam(required = false) minLat: Double?,
         @RequestParam(required = false) maxLat: Double?,
@@ -48,28 +48,28 @@ class RestaurantController(
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/restaurants/{id}", "/places/{id}")
     fun getRestaurantDetail(
         @PathVariable id: Long,
         @AuthenticationPrincipal user: UserPrincipal?
     ): ResponseEntity<RestaurantDetailResponse> =
         ResponseEntity.ok(restaurantService.getRestaurantDetail(id, user?.id))
 
-    @PostMapping
+    @PostMapping("/restaurants", "/places")
     fun createRestaurant(
         @AuthenticationPrincipal user: UserPrincipal,
         @Valid @RequestBody request: CreateRestaurantRequest
     ): ResponseEntity<RestaurantDetailResponse> =
         ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.createRestaurant(user.id, request))
 
-    @GetMapping("/my")
+    @GetMapping("/restaurants/my", "/places/my")
     fun getMyRestaurants(
         @AuthenticationPrincipal user: UserPrincipal,
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<RestaurantListResponse>> =
         ResponseEntity.ok(restaurantService.getMyRestaurants(user.id, pageable))
 
-    @PostMapping("/{id}/visit")
+    @PostMapping("/restaurants/{id}/visit", "/places/{id}/visit")
     fun verifyVisit(
         @PathVariable id: Long,
         @AuthenticationPrincipal user: UserPrincipal,
@@ -79,26 +79,26 @@ class RestaurantController(
         return ResponseEntity.ok(mapOf("visited" to true))
     }
 
-    @PostMapping("/quick-visit")
+    @PostMapping("/restaurants/quick-visit", "/places/quick-visit")
     fun quickVisit(
         @AuthenticationPrincipal user: UserPrincipal,
         @Valid @RequestBody request: QuickVisitRequest
     ): ResponseEntity<QuickVisitResponse> =
         ResponseEntity.ok(restaurantService.quickVisit(user.id, request))
 
-    @GetMapping("/stats/weekly-top")
+    @GetMapping("/restaurants/stats/weekly-top", "/places/stats/weekly-top")
     fun getWeeklyTop(): ResponseEntity<List<WeeklyTopRestaurant>> =
         ResponseEntity.ok(restaurantService.getWeeklyTopRestaurants())
 
-    @GetMapping("/stats/popular")
+    @GetMapping("/restaurants/stats/popular", "/places/stats/popular")
     fun getPopular(): ResponseEntity<List<PopularRestaurant>> =
         ResponseEntity.ok(restaurantService.getPopularRestaurants())
 
-    @GetMapping("/stats/category-summary")
+    @GetMapping("/restaurants/stats/category-summary", "/places/stats/category-summary")
     fun getCategorySummary(): ResponseEntity<List<CategorySummary>> =
         ResponseEntity.ok(restaurantService.getCategorySummary())
 
-    @GetMapping("/place-stats")
+    @GetMapping("/restaurants/place-stats", "/places/place-stats")
     fun getPlaceStats(
         @RequestParam naverPlaceId: String,
         @AuthenticationPrincipal user: UserPrincipal?
