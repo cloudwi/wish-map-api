@@ -136,13 +136,12 @@ class RestaurantService(
             .associate { row -> (row[0] as Long) to (row[1] as java.time.LocalDateTime) }
     }
 
-    // 이번 주 월요일~일요일 시간 범위 계산 (한국 시간 기준)
+    // 최근 7일 롤링 윈도우 (한국 시간 기준)
     private fun getWeekRange(): Pair<LocalDateTime, LocalDateTime> {
         val koreaZone = ZoneId.of("Asia/Seoul")
-        val today = LocalDate.now(koreaZone)
-        val monday = today.with(DayOfWeek.MONDAY)
-        val nextMonday = monday.plusWeeks(1)
-        return Pair(monday.atStartOfDay(), nextMonday.atStartOfDay())
+        val now = LocalDateTime.now(koreaZone)
+        val sevenDaysAgo = now.minusDays(7)
+        return Pair(sevenDaysAgo, now)
     }
 
     // 조회 대상 식당의 주간 방문왕을 배치로 조회
