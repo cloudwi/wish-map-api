@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.time.Duration
 
 @RestController
 @RequestMapping("/api/v1/search")
@@ -32,22 +33,28 @@ class SearchController(
         val clampedDisplay = display.coerceIn(1, 15)
         logger.debug("Search places: query={}, clientId={}", query, clientId.take(4) + "***")
 
-        val result = webClient.get()
-            .uri { uriBuilder ->
-                uriBuilder
-                    .scheme("https")
-                    .host("openapi.naver.com")
-                    .path("/v1/search/local.json")
-                    .queryParam("query", query)
-                    .queryParam("display", clampedDisplay)
-                    .queryParam("sort", "comment")
-                    .build()
-            }
-            .header("X-Naver-Client-Id", clientId)
-            .header("X-Naver-Client-Secret", clientSecret)
-            .retrieve()
-            .bodyToMono(Map::class.java)
-            .block()
+        val result = try {
+            webClient.get()
+                .uri { uriBuilder ->
+                    uriBuilder
+                        .scheme("https")
+                        .host("openapi.naver.com")
+                        .path("/v1/search/local.json")
+                        .queryParam("query", query)
+                        .queryParam("display", clampedDisplay)
+                        .queryParam("sort", "comment")
+                        .build()
+                }
+                .header("X-Naver-Client-Id", clientId)
+                .header("X-Naver-Client-Secret", clientSecret)
+                .retrieve()
+                .bodyToMono(Map::class.java)
+                .timeout(Duration.ofSeconds(5))
+                .block()
+        } catch (e: Exception) {
+            logger.warn("Naver place search timeout/error: {}", e.message)
+            mapOf("items" to emptyList<Any>())
+        }
 
         return ResponseEntity.ok(result)
     }
@@ -79,11 +86,12 @@ class SearchController(
                 .header("X-Naver-Client-Secret", clientSecret)
                 .retrieve()
                 .bodyToMono(Map::class.java)
+                .timeout(Duration.ofSeconds(5))
                 .block()
 
             ResponseEntity.ok(result)
-        } catch (e: WebClientResponseException.TooManyRequests) {
-            logger.warn("Naver image search rate limited")
+        } catch (e: Exception) {
+            logger.warn("Naver image search timeout/error: {}", e.message)
             ResponseEntity.ok(mapOf("items" to emptyList<Any>()))
         }
     }
