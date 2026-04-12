@@ -18,6 +18,7 @@ import java.util.*
 @Service
 class OAuthService(
     private val webClient: WebClient,
+    @Value("\${oauth.google.client-id:}") private val googleClientId: String,
     @Value("\${oauth.apple.client-id:}") private val appleClientId: String
 ) {
 
@@ -76,6 +77,12 @@ class OAuthService(
                 .retrieve()
                 .bodyToMono(Map::class.java)
                 .block() ?: throw IllegalArgumentException("Failed to get Google user info")
+        }
+
+        // audience 검증 (idToken인 경우 aud 필드 존재)
+        val aud = response["aud"]?.toString()
+        if (googleClientId.isNotBlank() && aud != null && aud != googleClientId) {
+            throw IllegalArgumentException("Google token audience mismatch")
         }
 
         val id = response["sub"].toString()

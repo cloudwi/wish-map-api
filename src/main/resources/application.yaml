@@ -34,14 +34,7 @@ spring.servlet.multipart:
 
 # OAuth 설정
 oauth:
-  kakao:
-    client-id: ${KAKAO_CLIENT_ID:}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
-  naver:
-    client-id: ${NAVER_CLIENT_ID:}
-    client-secret: ${NAVER_CLIENT_SECRET:}
   apple:
     client-id: ${APPLE_CLIENT_ID:}
-    key-id: ${APPLE_KEY_ID:}
-    team-id: ${APPLE_TEAM_ID:}
