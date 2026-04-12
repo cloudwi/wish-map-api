@@ -26,12 +26,6 @@ naver:
     client-id: ${NAVER_SEARCH_CLIENT_ID:}
     client-secret: ${NAVER_SEARCH_CLIENT_SECRET:}
 
-oauth:
-  google:
-    client-id: 386596705781-6tep6l6v4ftslcrcbdipakl72d26k750.apps.googleusercontent.com
-  apple:
-    client-id: com.wishmap.app
-
 logging:
   level:
     com.mindbridge: DEBUG

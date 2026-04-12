@@ -32,9 +32,9 @@ spring.servlet.multipart:
   max-file-size: 5MB
   max-request-size: 25MB
 
-# OAuth 설정
+# OAuth 설정 (공개 값 - 토큰 audience 검증용)
 oauth:
   google:
-    client-id: ${GOOGLE_CLIENT_ID:}
+    client-id: 386596705781-6tep6l6v4ftslcrcbdipakl72d26k750.apps.googleusercontent.com
   apple:
-    client-id: ${APPLE_CLIENT_ID:}
+    client-id: com.wishmap.app
