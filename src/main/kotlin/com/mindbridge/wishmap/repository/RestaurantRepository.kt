@@ -28,6 +28,32 @@ interface RestaurantRepository : JpaRepository<Restaurant, Long> {
         pageable: Pageable
     ): Page<Restaurant>
 
+    @Query("""
+        SELECT DISTINCT r FROM Restaurant r
+        JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        JOIN c.tags ct
+        WHERE r.lat BETWEEN :minLat AND :maxLat
+        AND r.lng BETWEEN :minLng AND :maxLng
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND ct.tag IN :tags
+    """,
+    countQuery = """
+        SELECT COUNT(DISTINCT r) FROM Restaurant r
+        JOIN Comment c ON c.restaurant = r AND c.isDeleted = false
+        JOIN c.tags ct
+        WHERE r.lat BETWEEN :minLat AND :maxLat
+        AND r.lng BETWEEN :minLng AND :maxLng
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND ct.tag IN :tags
+    """)
+    fun findByLocationBoundsWithTags(
+        minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
+        priceRange: PriceRange?, placeCategoryId: Long?,
+        tags: List<String>, pageable: Pageable
+    ): Page<Restaurant>
+
     fun findBySuggestedBy(user: User, pageable: Pageable): Page<Restaurant>
 
     fun existsByNaverPlaceId(naverPlaceId: String): Boolean

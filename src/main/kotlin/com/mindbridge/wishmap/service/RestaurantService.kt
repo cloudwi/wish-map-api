@@ -48,11 +48,19 @@ class RestaurantService(
         maxLng: Double,
         priceRange: PriceRange?,
         placeCategoryId: Long?,
+        tags: List<String>?,
         pageable: Pageable
     ): Page<RestaurantListResponse> {
-        val page = restaurantRepository.findByLocationBoundsWithFilters(
-            minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, pageable
-        )
+        val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
+        val page = if (effectiveTags != null) {
+            restaurantRepository.findByLocationBoundsWithTags(
+                minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, effectiveTags, pageable
+            )
+        } else {
+            restaurantRepository.findByLocationBoundsWithFilters(
+                minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, pageable
+            )
+        }
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         val lastVisitMap = batchLastVisitedAt(page.content)

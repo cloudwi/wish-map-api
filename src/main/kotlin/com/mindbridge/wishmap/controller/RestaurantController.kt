@@ -42,7 +42,7 @@ class RestaurantController(
         // 하위 호환: 구버전 앱의 tag 파라미터를 tags로 병합
         val effectiveTags = tags ?: tag?.let { listOf(it) }
         return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
-            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, pageable))
+            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
         } else {
             ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable, userLat = userLat, userLng = userLng))
         }
