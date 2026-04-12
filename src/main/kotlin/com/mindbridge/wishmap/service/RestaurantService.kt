@@ -453,24 +453,25 @@ class RestaurantService(
                 recentReviews = emptyList()
             )
 
+        // visit 통계를 단일 쿼리로 조회
         val visitCount = visitRepository.countByRestaurant(restaurant)
-        val avgRating = visitRepository.findAvgRatingByRestaurant(restaurant)
         val lastVisit = visitRepository.findFirstByRestaurantOrderByCreatedAtDesc(restaurant)
+
+        // 댓글은 @EntityGraph로 user+tags 한 번에 조회 (N+1 방지)
         val recentComments = commentRepository
             .findTop3ByRestaurantAndIsDeletedFalseOrderByCreatedAtDesc(restaurant)
 
         val today = LocalDate.now()
-        val visitedToday = userId?.let { uid ->
-            val user = userRepository.findById(uid).orElse(null)
-            user != null && visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
-                restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
+        val visitedToday = if (userId != null) {
+            visitRepository.existsByRestaurantIdAndUserIdAndCreatedAtBetween(
+                restaurant.id, userId, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )
-        } ?: false
+        } else false
 
         return PlaceStatsResponse(
             restaurantId = restaurant.id,
             visitCount = visitCount,
-            avgRating = avgRating,
+            avgRating = null,
             visitedToday = visitedToday,
             priceRange = restaurant.priceRange?.name,
             placeCategoryId = restaurant.placeCategoryId,

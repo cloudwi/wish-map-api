@@ -15,6 +15,15 @@ interface VisitRepository : JpaRepository<Visit, Long> {
         start: LocalDateTime,
         end: LocalDateTime
     ): Boolean
+
+    @Query("SELECT COUNT(v) > 0 FROM Visit v WHERE v.restaurant.id = :restaurantId AND v.user.id = :userId AND v.createdAt BETWEEN :start AND :end")
+    fun existsByRestaurantIdAndUserIdAndCreatedAtBetween(
+        restaurantId: Long,
+        userId: Long,
+        start: LocalDateTime,
+        end: LocalDateTime
+    ): Boolean
+
     fun countByRestaurant(restaurant: Restaurant): Long
     fun countByRestaurantAndUser(restaurant: Restaurant, user: User): Long
 

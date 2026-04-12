@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query
 interface CommentRepository : JpaRepository<Comment, Long> {
     fun findByRestaurantAndIsDeletedFalse(restaurant: Restaurant, pageable: Pageable): Page<Comment>
     fun countByRestaurantAndIsDeletedFalse(restaurant: Restaurant): Long
+    @EntityGraph(attributePaths = ["user", "tags"])
     fun findTop3ByRestaurantAndIsDeletedFalseOrderByCreatedAtDesc(restaurant: Restaurant): List<Comment>
 
     @EntityGraph(attributePaths = ["user", "tags", "images"])
