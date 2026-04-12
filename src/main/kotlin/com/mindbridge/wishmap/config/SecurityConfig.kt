@@ -45,6 +45,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/places/place-stats").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/places/stats/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/place-categories").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/trend-tags").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
 
                     // 인프라 / 개발 도구
