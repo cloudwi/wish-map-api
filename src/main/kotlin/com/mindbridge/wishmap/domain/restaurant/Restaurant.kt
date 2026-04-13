@@ -40,6 +40,6 @@ class Restaurant(
     @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
     val images: MutableList<RestaurantImage> = mutableListOf(),
 
-    @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val visits: MutableList<Visit> = mutableListOf()
 ) : BaseEntity()

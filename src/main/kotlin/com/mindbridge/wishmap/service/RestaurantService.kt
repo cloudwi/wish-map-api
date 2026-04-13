@@ -152,20 +152,37 @@ class RestaurantService(
         return Pair(sevenDaysAgo, now)
     }
 
-    // 조회 대상 식당의 주간 방문왕을 배치로 조회
+    // 주간 방문왕 캐시 (1시간 TTL)
+    private var championCache: Map<Long, String> = emptyMap()
+    private var championCacheTime: Long = 0
+    private val CHAMPION_CACHE_TTL = 1000L * 60 * 60 // 1시간
+
+    // 조회 대상 식당의 주간 방문왕을 배치로 조회 (캐시 활용)
     private fun batchWeeklyChampions(restaurants: List<Restaurant>): Map<Long, String> {
         if (restaurants.isEmpty()) return emptyMap()
-        val restaurantIds = restaurants.map { it.id }
-        val (weekStart, weekEnd) = getWeekRange()
-        val results = visitRepository.findWeeklyChampionsByRestaurantIds(restaurantIds, weekStart, weekEnd)
 
-        val championMap = mutableMapOf<Long, String>()
+        val now = System.currentTimeMillis()
+        if (now - championCacheTime > CHAMPION_CACHE_TTL) {
+            refreshChampionCache()
+        }
+
+        val restaurantIds = restaurants.map { it.id }.toSet()
+        return championCache.filterKeys { it in restaurantIds }
+    }
+
+    private fun refreshChampionCache() {
+        val (weekStart, weekEnd) = getWeekRange()
+        val results = visitRepository.findWeeklyChampionsByRestaurantIds(
+            restaurantRepository.findAll().map { it.id }, weekStart, weekEnd
+        )
+        val newCache = mutableMapOf<Long, String>()
         for (row in results) {
             val restaurantId = row[0] as Long
             val nickname = row[1] as String
-            championMap.putIfAbsent(restaurantId, nickname)
+            newCache.putIfAbsent(restaurantId, nickname)
         }
-        return championMap
+        championCache = newCache
+        championCacheTime = System.currentTimeMillis()
     }
 
     @Transactional(readOnly = true)

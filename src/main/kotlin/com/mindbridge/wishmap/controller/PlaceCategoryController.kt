@@ -13,9 +13,18 @@ import org.springframework.web.bind.annotation.RestController
 class PlaceCategoryController(
     private val placeCategoryRepository: PlaceCategoryRepository
 ) {
+    // 카테고리는 거의 변하지 않으므로 1시간 in-memory 캐시
+    private var cachedResponse: List<PlaceCategoryResponse>? = null
+    private var cacheTime: Long = 0
+    private val CACHE_TTL = 1000L * 60 * 60 // 1시간
 
     @GetMapping
     fun getPlaceCategories(): ResponseEntity<List<PlaceCategoryResponse>> {
+        val now = System.currentTimeMillis()
+        cachedResponse?.let {
+            if (now - cacheTime < CACHE_TTL) return ResponseEntity.ok(it)
+        }
+
         val categories = placeCategoryRepository.findByActiveTrueOrderByPriorityAsc()
             .map { category ->
                 val tagGroups = category.tags
@@ -35,6 +44,9 @@ class PlaceCategoryController(
                     tagGroups = tagGroups
                 )
             }
+
+        cachedResponse = categories
+        cacheTime = now
         return ResponseEntity.ok(categories)
     }
 }
