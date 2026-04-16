@@ -16,7 +16,7 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     @EntityGraph(attributePaths = ["user", "tags"])
     fun findTop3ByRestaurantAndIsDeletedFalseOrderByCreatedAtDesc(restaurant: Restaurant): List<Comment>
 
-    @EntityGraph(attributePaths = ["user", "tags", "images"])
+    @EntityGraph(attributePaths = ["user"])
     fun findWithUserAndTagsByRestaurantAndIsDeletedFalse(restaurant: Restaurant, pageable: Pageable): Page<Comment>
 
     @Modifying

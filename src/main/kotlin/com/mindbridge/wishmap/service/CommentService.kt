@@ -30,7 +30,6 @@ class CommentService(
         val restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow { ResourceNotFoundException("Restaurant not found: $restaurantId") }
 
-        // EntityGraph로 user, tags, images를 한 번에 조회 (N+1 방지)
         val page = commentRepository.findWithUserAndTagsByRestaurantAndIsDeletedFalse(restaurant, pageable)
 
         // 차단한 유저의 댓글 필터링
