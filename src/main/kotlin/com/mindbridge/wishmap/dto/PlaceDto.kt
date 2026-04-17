@@ -1,11 +1,11 @@
 package com.mindbridge.wishmap.dto
 
-import com.mindbridge.wishmap.domain.restaurant.PriceRange
-import com.mindbridge.wishmap.domain.restaurant.Restaurant
+import com.mindbridge.wishmap.domain.place.PriceRange
+import com.mindbridge.wishmap.domain.place.Place
 import jakarta.validation.constraints.*
 import java.time.LocalDateTime
 
-data class CreateRestaurantRequest(
+data class CreatePlaceRequest(
     @field:NotBlank(message = "가게 이름은 필수입니다")
     @field:Size(max = 100, message = "가게 이름은 100자 이하여야 합니다")
     val name: String,
@@ -33,7 +33,7 @@ data class CreateRestaurantRequest(
     val imageUrls: List<String> = emptyList()
 )
 
-data class RestaurantListResponse(
+data class PlaceListResponse(
     val id: Long,
     val name: String,
     val lat: Double,
@@ -48,7 +48,7 @@ data class RestaurantListResponse(
     val lastVisitedAt: java.time.LocalDateTime? = null
 )
 
-data class RestaurantDetailResponse(
+data class PlaceDetailResponse(
     val id: Long,
     val name: String,
     val lat: Double,
@@ -130,7 +130,7 @@ data class QuickVisitRequest(
 )
 
 data class QuickVisitResponse(
-    val restaurantId: Long,
+    val placeId: Long,
     val visited: Boolean,
     val isNew: Boolean
 )
@@ -144,7 +144,7 @@ data class ReviewSummary(
 )
 
 data class PlaceStatsResponse(
-    val restaurantId: Long,
+    val placeId: Long,
     val visitCount: Long,
     val avgRating: Double?,
     val visitedToday: Boolean,
@@ -154,7 +154,7 @@ data class PlaceStatsResponse(
     val lastVisitedAt: LocalDateTime? = null
 )
 
-data class WeeklyTopRestaurant(
+data class WeeklyTopPlace(
     val id: Long,
     val name: String,
     val category: String?,
@@ -163,7 +163,7 @@ data class WeeklyTopRestaurant(
     val placeCategoryId: Long?
 )
 
-data class PopularRestaurant(
+data class PopularPlace(
     val id: Long,
     val name: String,
     val category: String?,
@@ -175,14 +175,14 @@ data class PopularRestaurant(
 data class CategorySummary(
     val placeCategoryId: Long,
     val name: String,
-    val restaurantCount: Long
+    val placeCount: Long
 )
 
-fun Restaurant.toListResponse(
+fun Place.toListResponse(
     visitCount: Long,
     weeklyChampion: String? = null,
     lastVisitedAt: java.time.LocalDateTime? = null
-) = RestaurantListResponse(
+) = PlaceListResponse(
     id = id,
     name = name,
     lat = lat,

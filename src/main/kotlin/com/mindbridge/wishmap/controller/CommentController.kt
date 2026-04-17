@@ -20,23 +20,23 @@ class CommentController(
     private val commentService: CommentService
 ) {
 
-    @GetMapping("/restaurants/{restaurantId}/comments", "/places/{restaurantId}/comments")
+    @GetMapping("/places/{placeId}/comments")
     fun getComments(
-        @PathVariable restaurantId: Long,
+        @PathVariable placeId: Long,
         @AuthenticationPrincipal user: UserPrincipal?,
         @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
     ): ResponseEntity<Page<CommentResponse>> {
-        val comments = commentService.getComments(restaurantId, user?.id, pageable)
+        val comments = commentService.getComments(placeId, user?.id, pageable)
         return ResponseEntity.ok(comments)
     }
 
-    @PostMapping("/restaurants/{restaurantId}/comments", "/places/{restaurantId}/comments")
+    @PostMapping("/places/{placeId}/comments")
     fun createComment(
-        @PathVariable restaurantId: Long,
+        @PathVariable placeId: Long,
         @AuthenticationPrincipal user: UserPrincipal,
         @Valid @RequestBody request: CreateCommentRequest
     ): ResponseEntity<CommentResponse> {
-        val comment = commentService.createComment(restaurantId, user.id, request)
+        val comment = commentService.createComment(placeId, user.id, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(comment)
     }
 

@@ -17,7 +17,7 @@ interface LunchVoteRepository : JpaRepository<LunchVote, Long> {
 
 interface LunchVoteCandidateRepository : JpaRepository<LunchVoteCandidate, Long> {
     fun findAllByVoteId(voteId: Long): List<LunchVoteCandidate>
-    fun existsByVoteIdAndRestaurantId(voteId: Long, restaurantId: Long): Boolean
+    fun existsByVoteIdAndPlaceId(voteId: Long, placeId: Long): Boolean
 }
 
 interface LunchVoteSelectionRepository : JpaRepository<LunchVoteSelection, Long> {

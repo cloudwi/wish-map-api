@@ -1,12 +1,12 @@
-package com.mindbridge.wishmap.domain.restaurant
+package com.mindbridge.wishmap.domain.place
 
 import com.mindbridge.wishmap.domain.common.BaseEntity
 import com.mindbridge.wishmap.domain.user.User
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "restaurants")
-class Restaurant(
+@Table(name = "places")
+class Place(
     @Column(nullable = false)
     var name: String,
 
@@ -37,9 +37,6 @@ class Restaurant(
     @JoinColumn(name = "suggested_by", nullable = false)
     val suggestedBy: User,
 
-    @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val images: MutableList<RestaurantImage> = mutableListOf(),
-
-    @OneToMany(mappedBy = "restaurant", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @OneToMany(mappedBy = "place", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val visits: MutableList<Visit> = mutableListOf()
 ) : BaseEntity()

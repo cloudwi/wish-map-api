@@ -34,11 +34,6 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/**").authenticated()
 
                     // 공개 조회 API
-                    .requestMatchers(HttpMethod.GET, "/api/v1/restaurants").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}/comments").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/place-stats").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/stats/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/places").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/places/{id}").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/places/{id}/comments").permitAll()

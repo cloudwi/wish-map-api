@@ -9,12 +9,12 @@ data class CreateLunchVoteRequest(
     val title: String? = null,
     @field:NotNull(message = "마감 시간은 필수입니다")
     val deadline: LocalDateTime,
-    val candidateRestaurantIds: List<Long> = emptyList()
+    val candidatePlaceIds: List<Long> = emptyList()
 )
 
 data class AddCandidateRequest(
     @field:NotNull(message = "맛집 ID는 필수입니다")
-    val restaurantId: Long
+    val placeId: Long
 )
 
 data class CastVoteRequest(
@@ -39,13 +39,13 @@ data class LunchVoteResponse(
 
 data class LunchVoteCandidateResponse(
     val id: Long,
-    val restaurant: LunchVoteRestaurantSummary,
+    val place: LunchVotePlaceSummary,
     val addedBy: String,
     val voteCount: Int,
     val voters: List<String>
 )
 
-data class LunchVoteRestaurantSummary(
+data class LunchVotePlaceSummary(
     val id: Long,
     val name: String,
     val category: String?,

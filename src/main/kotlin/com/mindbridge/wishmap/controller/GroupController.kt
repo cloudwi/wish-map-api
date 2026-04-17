@@ -1,10 +1,10 @@
 package com.mindbridge.wishmap.controller
 
-import com.mindbridge.wishmap.domain.restaurant.PriceRange
+import com.mindbridge.wishmap.domain.place.PriceRange
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.service.GroupService
-import com.mindbridge.wishmap.service.RestaurantService
+import com.mindbridge.wishmap.service.PlaceService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/groups")
 class GroupController(
     private val groupService: GroupService,
-    private val restaurantService: RestaurantService
+    private val placeService: PlaceService
 ) {
 
     @GetMapping
@@ -113,8 +113,8 @@ class GroupController(
     }
 
     // 그룹 필터: 그룹 구성원이 방문/제보한 맛집만 조회
-    @GetMapping("/{id}/restaurants")
-    fun getGroupRestaurants(
+    @GetMapping("/{id}/places")
+    fun getGroupPlaces(
         @AuthenticationPrincipal user: UserPrincipal,
         @PathVariable id: Long,
         @RequestParam minLat: Double,
@@ -123,13 +123,13 @@ class GroupController(
         @RequestParam maxLng: Double,
         @RequestParam(required = false) priceRange: String?,
         @PageableDefault(size = 50) pageable: Pageable
-    ): ResponseEntity<Page<RestaurantListResponse>> {
+    ): ResponseEntity<Page<PlaceListResponse>> {
         val parsedPriceRange = priceRange?.let {
             try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
         }
         val memberIds = groupService.getGroupMemberIds(id)
         return ResponseEntity.ok(
-            restaurantService.getRestaurantsByMembers(minLat, maxLat, minLng, maxLng, memberIds, parsedPriceRange, pageable)
+            placeService.getPlacesByMembers(minLat, maxLat, minLng, maxLng, memberIds, parsedPriceRange, pageable)
         )
     }
 }

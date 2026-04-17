@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.restaurant
+package com.mindbridge.wishmap.domain.place
 
 import com.mindbridge.wishmap.domain.common.BaseTimeEntity
 import com.mindbridge.wishmap.domain.user.User
@@ -8,8 +8,8 @@ import jakarta.persistence.*
 @Table(name = "visits")
 class Visit(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id", nullable = false)
-    val restaurant: Restaurant,
+    @JoinColumn(name = "place_id", nullable = false)
+    val place: Place,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

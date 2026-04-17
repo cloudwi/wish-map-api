@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.domain.comment
 
 import com.mindbridge.wishmap.domain.common.BaseEntity
-import com.mindbridge.wishmap.domain.restaurant.Restaurant
+import com.mindbridge.wishmap.domain.place.Place
 import com.mindbridge.wishmap.domain.user.User
 import jakarta.persistence.*
 
@@ -9,8 +9,8 @@ import jakarta.persistence.*
 @Table(name = "comments")
 class Comment(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id", nullable = false)
-    val restaurant: Restaurant,
+    @JoinColumn(name = "place_id", nullable = false)
+    val place: Place,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

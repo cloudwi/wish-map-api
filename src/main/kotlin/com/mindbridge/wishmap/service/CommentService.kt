@@ -8,7 +8,7 @@ import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.BlockedUserRepository
 import com.mindbridge.wishmap.repository.CommentRepository
-import com.mindbridge.wishmap.repository.RestaurantRepository
+import com.mindbridge.wishmap.repository.PlaceRepository
 import com.mindbridge.wishmap.repository.UserRepository
 import com.mindbridge.wishmap.repository.VisitRepository
 import org.springframework.data.domain.Page
@@ -19,18 +19,18 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class CommentService(
     private val commentRepository: CommentRepository,
-    private val restaurantRepository: RestaurantRepository,
+    private val placeRepository: PlaceRepository,
     private val userRepository: UserRepository,
     private val visitRepository: VisitRepository,
     private val blockedUserRepository: BlockedUserRepository
 ) {
 
     @Transactional(readOnly = true)
-    fun getComments(restaurantId: Long, currentUserId: Long?, pageable: Pageable): Page<CommentResponse> {
-        val restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow { ResourceNotFoundException("Restaurant not found: $restaurantId") }
+    fun getComments(placeId: Long, currentUserId: Long?, pageable: Pageable): Page<CommentResponse> {
+        val place = placeRepository.findById(placeId)
+            .orElseThrow { ResourceNotFoundException("Place not found: $placeId") }
 
-        val page = commentRepository.findWithUserAndTagsByRestaurantAndIsDeletedFalse(restaurant, pageable)
+        val page = commentRepository.findWithUserAndTagsByPlaceAndIsDeletedFalse(place, pageable)
 
         // 차단한 유저의 댓글 필터링
         val blockedIds = if (currentUserId != null) {
@@ -42,7 +42,7 @@ class CommentService(
         // 유저별 방문 횟수 배치 조회 (단일 쿼리)
         val distinctUsers = filtered.map { it.user }.distinct()
         val visitCountMap = if (distinctUsers.isNotEmpty()) {
-            visitRepository.countByRestaurantAndUsers(restaurant, distinctUsers)
+            visitRepository.countByPlaceAndUsers(place, distinctUsers)
                 .associate { row -> (row[0] as Long) to (row[1] as Long) }
         } else emptyMap()
 
@@ -51,14 +51,14 @@ class CommentService(
     }
 
     @Transactional
-    fun createComment(restaurantId: Long, userId: Long, request: CreateCommentRequest): CommentResponse {
-        val restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow { ResourceNotFoundException("Restaurant not found: $restaurantId") }
+    fun createComment(placeId: Long, userId: Long, request: CreateCommentRequest): CommentResponse {
+        val place = placeRepository.findById(placeId)
+            .orElseThrow { ResourceNotFoundException("Place not found: $placeId") }
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
         val comment = Comment(
-            restaurant = restaurant,
+            place = place,
             user = user,
             content = request.content
         )
@@ -72,7 +72,7 @@ class CommentService(
         }
 
         val saved = commentRepository.save(comment)
-        val visitCount = visitRepository.countByRestaurantAndUser(restaurant, user)
+        val visitCount = visitRepository.countByPlaceAndUser(place, user)
         return saved.toResponse(userId, visitCount)
     }
 

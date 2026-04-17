@@ -3,10 +3,9 @@ package com.mindbridge.wishmap.service
 import com.mindbridge.wishmap.domain.comment.Comment
 import com.mindbridge.wishmap.domain.comment.CommentImage
 import com.mindbridge.wishmap.domain.comment.CommentTag
-import com.mindbridge.wishmap.domain.restaurant.PriceRange
-import com.mindbridge.wishmap.domain.restaurant.Restaurant
-import com.mindbridge.wishmap.domain.restaurant.RestaurantImage
-import com.mindbridge.wishmap.domain.restaurant.Visit
+import com.mindbridge.wishmap.domain.place.PriceRange
+import com.mindbridge.wishmap.domain.place.Place
+import com.mindbridge.wishmap.domain.place.Visit
 import com.mindbridge.wishmap.domain.user.User
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
@@ -26,9 +25,9 @@ import java.time.ZoneId
 import kotlin.math.*
 
 @Service
-class RestaurantService(
-    private val log: org.slf4j.Logger = org.slf4j.LoggerFactory.getLogger(RestaurantService::class.java),
-    private val restaurantRepository: RestaurantRepository,
+class PlaceService(
+    private val log: org.slf4j.Logger = org.slf4j.LoggerFactory.getLogger(PlaceService::class.java),
+    private val placeRepository: PlaceRepository,
     private val userRepository: UserRepository,
     private val commentRepository: CommentRepository,
     private val visitRepository: VisitRepository,
@@ -41,7 +40,7 @@ class RestaurantService(
     }
 
     @Transactional(readOnly = true)
-    fun getRestaurants(
+    fun getPlaces(
         minLat: Double,
         maxLat: Double,
         minLng: Double,
@@ -50,31 +49,31 @@ class RestaurantService(
         placeCategoryId: Long?,
         tags: List<String>?,
         pageable: Pageable
-    ): Page<RestaurantListResponse> {
+    ): Page<PlaceListResponse> {
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
         val page = if (effectiveTags != null) {
-            restaurantRepository.findByLocationBoundsWithTags(
+            placeRepository.findByLocationBoundsWithTags(
                 minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, effectiveTags, pageable
             )
         } else {
-            restaurantRepository.findByLocationBoundsWithFilters(
+            placeRepository.findByLocationBoundsWithFilters(
                 minLat, maxLat, minLng, maxLng, priceRange, placeCategoryId, pageable
             )
         }
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         val lastVisitMap = batchLastVisitedAt(page.content)
-        return page.map { restaurant ->
-            restaurant.toListResponse(
-                visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id],
-                lastVisitedAt = lastVisitMap[restaurant.id]
+        return page.map { place ->
+            place.toListResponse(
+                visitCount = visitCountMap[place.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[place.id],
+                lastVisitedAt = lastVisitMap[place.id]
             )
         }
     }
 
     @Transactional(readOnly = true)
-    fun getRestaurantsWithFilters(
+    fun getPlacesWithFilters(
         category: String?,
         search: String?,
         sort: String?,
@@ -84,63 +83,63 @@ class RestaurantService(
         pageable: Pageable,
         userLat: Double? = null,
         userLng: Double? = null
-    ): Page<RestaurantListResponse> {
+    ): Page<PlaceListResponse> {
         val effectiveSearch = search?.takeIf { it.isNotBlank() }
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
 
         val page = when (sort) {
-            "visits" -> restaurantRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
-            "recentVisit" -> restaurantRepository.findWithFiltersSortByRecentVisit(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            "visits" -> placeRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            "recentVisit" -> placeRepository.findWithFiltersSortByRecentVisit(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
             "distance" -> {
                 require(userLat != null && userLng != null) { "userLat and userLng are required for distance sort" }
-                restaurantRepository.findWithFiltersSortByDistance(
+                placeRepository.findWithFiltersSortByDistance(
                     placeCategoryId, effectiveSearch, priceRange?.name, userLat, userLng, pageable
                 )
             }
-            else -> restaurantRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            else -> placeRepository.findWithFilters(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
         }
 
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         val lastVisitMap = batchLastVisitedAt(page.content)
-        return page.map { restaurant ->
-            restaurant.toListResponse(
-                visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id],
-                lastVisitedAt = lastVisitMap[restaurant.id]
+        return page.map { place ->
+            place.toListResponse(
+                visitCount = visitCountMap[place.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[place.id],
+                lastVisitedAt = lastVisitMap[place.id]
             )
         }
     }
 
     @Transactional(readOnly = true)
-    fun getRestaurantsByMembers(
+    fun getPlacesByMembers(
         minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
         memberIds: List<Long>, priceRange: PriceRange?, pageable: Pageable
-    ): Page<RestaurantListResponse> {
+    ): Page<PlaceListResponse> {
         if (memberIds.isEmpty()) return Page.empty()
-        val page = restaurantRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
+        val page = placeRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
         val lastVisitMap = batchLastVisitedAt(page.content)
-        return page.map { restaurant ->
-            restaurant.toListResponse(
-                visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id],
-                lastVisitedAt = lastVisitMap[restaurant.id]
+        return page.map { place ->
+            place.toListResponse(
+                visitCount = visitCountMap[place.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[place.id],
+                lastVisitedAt = lastVisitMap[place.id]
             )
         }
     }
 
-    private fun batchVisitCounts(restaurants: List<Restaurant>): Map<Long, Long> {
-        if (restaurants.isEmpty()) return emptyMap()
-        return restaurantRepository.countVisitsByRestaurants(restaurants)
+    private fun batchVisitCounts(places: List<Place>): Map<Long, Long> {
+        if (places.isEmpty()) return emptyMap()
+        return placeRepository.countVisitsByPlaces(places)
             .associate { row -> (row[0] as Long) to (row[1] as Long) }
     }
 
-    private fun batchLastVisitedAt(restaurants: List<Restaurant>): Map<Long, java.time.LocalDateTime> {
-        if (restaurants.isEmpty()) return emptyMap()
-        val ids = restaurants.map { it.id }
-        return visitRepository.findLastVisitDatesByRestaurantIds(ids)
+    private fun batchLastVisitedAt(places: List<Place>): Map<Long, java.time.LocalDateTime> {
+        if (places.isEmpty()) return emptyMap()
+        val ids = places.map { it.id }
+        return visitRepository.findLastVisitDatesByPlaceIds(ids)
             .associate { row -> (row[0] as Long) to (row[1] as java.time.LocalDateTime) }
     }
 
@@ -158,102 +157,103 @@ class RestaurantService(
     private val CHAMPION_CACHE_TTL = 1000L * 60 * 60 // 1시간
 
     // 조회 대상 식당의 주간 방문왕을 배치로 조회 (캐시 활용)
-    private fun batchWeeklyChampions(restaurants: List<Restaurant>): Map<Long, String> {
-        if (restaurants.isEmpty()) return emptyMap()
+    private fun batchWeeklyChampions(places: List<Place>): Map<Long, String> {
+        if (places.isEmpty()) return emptyMap()
 
         val now = System.currentTimeMillis()
         if (now - championCacheTime > CHAMPION_CACHE_TTL) {
             refreshChampionCache()
         }
 
-        val restaurantIds = restaurants.map { it.id }.toSet()
-        return championCache.filterKeys { it in restaurantIds }
+        val placeIds = places.map { it.id }.toSet()
+        return championCache.filterKeys { it in placeIds }
     }
 
     private fun refreshChampionCache() {
         val (weekStart, weekEnd) = getWeekRange()
-        val results = visitRepository.findWeeklyChampionsByRestaurantIds(
-            restaurantRepository.findAll().map { it.id }, weekStart, weekEnd
+        val results = visitRepository.findWeeklyChampionsByPlaceIds(
+            placeRepository.findAll().map { it.id }, weekStart, weekEnd
         )
         val newCache = mutableMapOf<Long, String>()
         for (row in results) {
-            val restaurantId = row[0] as Long
+            val placeId = row[0] as Long
             val nickname = row[1] as String
-            newCache.putIfAbsent(restaurantId, nickname)
+            newCache.putIfAbsent(placeId, nickname)
         }
         championCache = newCache
         championCacheTime = System.currentTimeMillis()
     }
 
     @Transactional(readOnly = true)
-    fun getRestaurantDetail(id: Long, userId: Long?): RestaurantDetailResponse {
-        val restaurant = restaurantRepository.findById(id)
-            .orElseThrow { ResourceNotFoundException("Restaurant not found: $id") }
+    fun getPlaceDetail(id: Long, userId: Long?): PlaceDetailResponse {
+        val place = placeRepository.findById(id)
+            .orElseThrow { ResourceNotFoundException("Place not found: $id") }
 
-        val visitCount = visitRepository.countByRestaurant(restaurant)
-        val commentCount = commentRepository.countByRestaurantAndIsDeletedFalse(restaurant)
+        val visitCount = visitRepository.countByPlace(place)
+        val commentCount = commentRepository.countByPlaceAndIsDeletedFalse(place)
 
-        val lastVisit = visitRepository.findFirstByRestaurantOrderByCreatedAtDesc(restaurant)
+        val lastVisit = visitRepository.findFirstByPlaceOrderByCreatedAtDesc(place)
         val user = userId?.let { userRepository.findById(it).orElse(null) }
         val today = LocalDate.now()
         val isVisited = user != null &&
-            visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
-                restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
+            visitRepository.existsByPlaceAndUserAndCreatedAtBetween(
+                place, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )
 
-        return RestaurantDetailResponse(
-            id = restaurant.id,
-            name = restaurant.name,
-            lat = restaurant.lat,
-            lng = restaurant.lng,
-            naverPlaceId = restaurant.naverPlaceId,
-            category = restaurant.category,
-            description = restaurant.description,
-            thumbnailImage = restaurant.thumbnailImage,
-            images = restaurant.images.sortedBy { it.displayOrder }.map { it.imageUrl },
+        return PlaceDetailResponse(
+            id = place.id,
+            name = place.name,
+            lat = place.lat,
+            lng = place.lng,
+            naverPlaceId = place.naverPlaceId,
+            category = place.category,
+            description = place.description,
+            thumbnailImage = place.thumbnailImage,
+            images = emptyList(),
             suggestedBy = UserSummary(
-                id = restaurant.suggestedBy.id,
-                nickname = restaurant.suggestedBy.nickname,
-                profileImage = restaurant.suggestedBy.profileImage
+                id = place.suggestedBy.id,
+                nickname = place.suggestedBy.nickname,
+                profileImage = place.suggestedBy.profileImage
             ),
             visitCount = visitCount,
             commentCount = commentCount,
             isVisited = isVisited,
-            priceRange = restaurant.priceRange?.name,
-            placeCategoryId = restaurant.placeCategoryId,
+            priceRange = place.priceRange?.name,
+            placeCategoryId = place.placeCategoryId,
             lastVisitedAt = lastVisit?.createdAt,
-            createdAt = restaurant.createdAt,
-            updatedAt = restaurant.updatedAt
+            createdAt = place.createdAt,
+            updatedAt = place.updatedAt
         )
     }
 
     @Transactional
-    fun verifyVisit(restaurantId: Long, userId: Long, request: VisitVerifyRequest): Boolean {
-        val restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow { ResourceNotFoundException("Restaurant not found: $restaurantId") }
+    fun verifyVisit(placeId: Long, userId: Long, request: VisitVerifyRequest): Boolean {
+        val place = placeRepository.findById(placeId)
+            .orElseThrow { ResourceNotFoundException("Place not found: $placeId") }
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
         val today = LocalDate.now()
-        if (visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
-                restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
+        if (visitRepository.existsByPlaceAndUserAndCreatedAtBetween(
+                place, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )) {
             throw DuplicateResourceException("오늘 이미 방문 인증한 장소입니다")
         }
 
-        val distance = haversineDistance(request.lat, request.lng, restaurant.lat, restaurant.lng)
+        val distance = haversineDistance(request.lat, request.lng, place.lat, place.lng)
         if (distance > VISIT_DISTANCE_LIMIT_METERS) {
             throw IllegalArgumentException("장소에서 100m 이내에서만 방문 인증이 가능합니다")
         }
 
-        visitRepository.save(Visit(restaurant = restaurant, user = user, priceRange = restaurant.priceRange ?: PriceRange.RANGE_10K))
+        visitRepository.save(Visit(place = place, user = user, priceRange = place.priceRange ?: PriceRange.RANGE_10K))
         return true
     }
 
-    private fun createRestaurantFromQuickVisit(request: QuickVisitRequest, user: User): Restaurant {
-        val thumbnail = naverSearchService.searchThumbnail(request.name)
-        return restaurantRepository.save(
-            Restaurant(
+    private fun createPlaceFromQuickVisit(request: QuickVisitRequest, user: User): Place {
+        val fallback = request.category?.takeIf { it.isNotBlank() }?.let { "${request.name} $it" }
+        val thumbnail = naverSearchService.searchThumbnail(request.name, fallback)
+        return placeRepository.save(
+            Place(
                 name = request.name,
                 lat = request.lat,
                 lng = request.lng,
@@ -277,16 +277,17 @@ class RestaurantService(
     }
 
     @Transactional
-    fun createRestaurant(userId: Long, request: CreateRestaurantRequest): RestaurantDetailResponse {
+    fun createPlace(userId: Long, request: CreatePlaceRequest): PlaceDetailResponse {
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
-        if (request.naverPlaceId != null && restaurantRepository.existsByNaverPlaceId(request.naverPlaceId)) {
+        if (request.naverPlaceId != null && placeRepository.existsByNaverPlaceId(request.naverPlaceId)) {
             throw IllegalArgumentException("이미 등록된 장소입니다")
         }
 
-        val thumbnail = request.thumbnailImage ?: naverSearchService.searchThumbnail(request.name)
-        val restaurant = Restaurant(
+        val fallback = request.category?.takeIf { it.isNotBlank() }?.let { "${request.name} $it" }
+        val thumbnail = request.thumbnailImage ?: naverSearchService.searchThumbnail(request.name, fallback)
+        val place = Place(
             name = request.name,
             lat = request.lat,
             lng = request.lng,
@@ -297,28 +298,28 @@ class RestaurantService(
             suggestedBy = user
         )
 
-        val saved = restaurantRepository.save(restaurant)
-        return getRestaurantDetail(saved.id, userId)
+        val saved = placeRepository.save(place)
+        return getPlaceDetail(saved.id, userId)
     }
 
     @Transactional(readOnly = true)
-    fun getMyRestaurants(userId: Long, pageable: Pageable): Page<RestaurantListResponse> {
+    fun getMyPlaces(userId: Long, pageable: Pageable): Page<PlaceListResponse> {
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
-        val page = restaurantRepository.findBySuggestedBy(user, pageable)
+        val page = placeRepository.findBySuggestedBy(user, pageable)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
-        val restaurantIds = page.content.map { it.id }
-        val lastVisitMap = if (restaurantIds.isNotEmpty()) {
-            visitRepository.findLastVisitDatesByUserAndRestaurantIds(user, restaurantIds)
+        val placeIds = page.content.map { it.id }
+        val lastVisitMap = if (placeIds.isNotEmpty()) {
+            visitRepository.findLastVisitDatesByUserAndPlaceIds(user, placeIds)
                 .associate { (it[0] as Long) to (it[1] as java.time.LocalDateTime) }
         } else emptyMap()
-        return page.map { restaurant ->
-            restaurant.toListResponse(
-                visitCount = visitCountMap[restaurant.id] ?: 0L,
-                weeklyChampion = weeklyChampionMap[restaurant.id],
-                lastVisitedAt = lastVisitMap[restaurant.id]
+        return page.map { place ->
+            place.toListResponse(
+                visitCount = visitCountMap[place.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[place.id],
+                lastVisitedAt = lastVisitMap[place.id]
             )
         }
     }
@@ -329,47 +330,47 @@ class RestaurantService(
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
         var isNew = false
-        val restaurant = if (request.naverPlaceId != null) {
-            restaurantRepository.findByNaverPlaceId(request.naverPlaceId) ?: run {
+        val place = if (request.naverPlaceId != null) {
+            placeRepository.findByNaverPlaceId(request.naverPlaceId) ?: run {
                 isNew = true
-                createRestaurantFromQuickVisit(request, user)
+                createPlaceFromQuickVisit(request, user)
             }
         } else if (request.placeCategoryId != null) {
             // 커스텀 장소: 같은 카테고리 + 100m 이내 기존 장소 재사용
             val radiusDeg = VISIT_DISTANCE_LIMIT_METERS / 111000.0
-            val nearby = restaurantRepository.findNearbyCustomByCategory(
+            val nearby = placeRepository.findNearbyCustomByCategory(
                 request.placeCategoryId,
                 request.lat - radiusDeg, request.lat + radiusDeg,
                 request.lng - radiusDeg, request.lng + radiusDeg
             ).firstOrNull { haversineDistance(request.lat, request.lng, it.lat, it.lng) <= VISIT_DISTANCE_LIMIT_METERS }
             nearby ?: run {
                 isNew = true
-                createRestaurantFromQuickVisit(request, user)
+                createPlaceFromQuickVisit(request, user)
             }
         } else {
             isNew = true
-            createRestaurantFromQuickVisit(request, user)
+            createPlaceFromQuickVisit(request, user)
         }
 
-        val distance = haversineDistance(request.userLat, request.userLng, restaurant.lat, restaurant.lng)
+        val distance = haversineDistance(request.userLat, request.userLng, place.lat, place.lng)
         if (distance > VISIT_DISTANCE_LIMIT_METERS) {
             throw IllegalArgumentException("장소에서 100m 이내에서만 방문 인증이 가능합니다")
         }
 
         val today = LocalDate.now()
-        if (visitRepository.existsByRestaurantAndUserAndCreatedAtBetween(
-                restaurant, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
+        if (visitRepository.existsByPlaceAndUserAndCreatedAtBetween(
+                place, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )) {
             throw DuplicateResourceException("오늘 이미 방문 인증한 장소입니다")
         }
 
-        val visit = Visit(restaurant = restaurant, user = user, rating = request.rating, priceRange = request.priceRange)
+        val visit = Visit(place = place, user = user, rating = request.rating, priceRange = request.priceRange)
         visitRepository.save(visit)
 
         // 리뷰 (한줄평 + 태그 + 이미지) 처리
         if (!request.comment.isNullOrBlank() || request.tags.isNotEmpty() || request.imageUrls.isNotEmpty()) {
             val comment = Comment(
-                restaurant = restaurant,
+                place = place,
                 user = user,
                 content = request.comment ?: ""
             )
@@ -383,41 +384,42 @@ class RestaurantService(
         }
 
         // 가격대 캐시 업데이트
-        updateCachedPriceRange(restaurant)
+        updateCachedPriceRange(place)
 
         // thumbnail이 없는 기존 장소에 이미지 채우기
-        if (restaurant.thumbnailImage == null) {
-            val thumbnail = naverSearchService.searchThumbnail(restaurant.name)
+        if (place.thumbnailImage == null) {
+            val fallback = place.category?.takeIf { it.isNotBlank() }?.let { "${place.name} $it" }
+            val thumbnail = naverSearchService.searchThumbnail(place.name, fallback)
             if (thumbnail != null) {
-                restaurant.thumbnailImage = thumbnail
-                restaurantRepository.save(restaurant)
+                place.thumbnailImage = thumbnail
+                placeRepository.save(place)
             }
         }
 
-        log.info("방문인증: userId={}, restaurantId={}, isNew={}, name={}", userId, restaurant.id, isNew, restaurant.name)
-        return QuickVisitResponse(restaurantId = restaurant.id, visited = true, isNew = isNew)
+        log.info("방문인증: userId={}, placeId={}, isNew={}, name={}", userId, place.id, isNew, place.name)
+        return QuickVisitResponse(placeId = place.id, visited = true, isNew = isNew)
     }
 
-    private fun updateCachedPriceRange(restaurant: Restaurant) {
-        val results = visitRepository.findPriceRangesByRestaurants(listOf(restaurant))
+    private fun updateCachedPriceRange(place: Place) {
+        val results = visitRepository.findPriceRangesByPlaces(listOf(place))
         if (results.isNotEmpty()) {
             val topPriceRange = results[0][1] as? PriceRange
             if (topPriceRange != null) {
-                restaurant.priceRange = topPriceRange
-                restaurantRepository.save(restaurant)
+                place.priceRange = topPriceRange
+                placeRepository.save(place)
             }
         }
     }
 
     @Transactional(readOnly = true)
-    fun getWeeklyTopRestaurants(limit: Int = 3): List<WeeklyTopRestaurant> {
+    fun getWeeklyTopPlaces(limit: Int = 3): List<WeeklyTopPlace> {
         val (weekStart, weekEnd) = getWeekRange()
-        val restaurants = restaurantRepository.findWeeklyTopRestaurants(
+        val places = placeRepository.findWeeklyTopPlaces(
             weekStart, weekEnd, PageRequest.of(0, limit)
         )
-        val visitCountMap = batchVisitCounts(restaurants)
-        return restaurants.map { r ->
-            WeeklyTopRestaurant(
+        val visitCountMap = batchVisitCounts(places)
+        return places.map { r ->
+            WeeklyTopPlace(
                 id = r.id,
                 name = r.name,
                 category = r.category,
@@ -429,11 +431,11 @@ class RestaurantService(
     }
 
     @Transactional(readOnly = true)
-    fun getPopularRestaurants(limit: Int = 5): List<PopularRestaurant> {
-        val restaurants = restaurantRepository.findPopularRestaurants(PageRequest.of(0, limit))
-        val visitCountMap = batchVisitCounts(restaurants)
-        return restaurants.map { r ->
-            PopularRestaurant(
+    fun getPopularPlaces(limit: Int = 5): List<PopularPlace> {
+        val places = placeRepository.findPopularPlaces(PageRequest.of(0, limit))
+        val visitCountMap = batchVisitCounts(places)
+        return places.map { r ->
+            PopularPlace(
                 id = r.id,
                 name = r.name,
                 category = r.category,
@@ -446,22 +448,22 @@ class RestaurantService(
 
     @Transactional(readOnly = true)
     fun getCategorySummary(): List<CategorySummary> {
-        return restaurantRepository.countByPlaceCategory().map { row ->
+        return placeRepository.countByPlaceCategory().map { row ->
             val categoryId = row[0] as Long
             val count = row[1] as Long
             CategorySummary(
                 placeCategoryId = categoryId,
                 name = "",  // will be filled by frontend from cached categories
-                restaurantCount = count
+                placeCount = count
             )
         }
     }
 
     @Transactional(readOnly = true)
     fun getPlaceStats(naverPlaceId: String, userId: Long? = null): PlaceStatsResponse {
-        val restaurant = restaurantRepository.findByNaverPlaceId(naverPlaceId)
+        val place = placeRepository.findByNaverPlaceId(naverPlaceId)
             ?: return PlaceStatsResponse(
-                restaurantId = 0,
+                placeId = 0,
                 visitCount = 0,
                 avgRating = null,
                 visitedToday = false,
@@ -471,27 +473,27 @@ class RestaurantService(
             )
 
         // visit 통계를 단일 쿼리로 조회
-        val visitCount = visitRepository.countByRestaurant(restaurant)
-        val lastVisit = visitRepository.findFirstByRestaurantOrderByCreatedAtDesc(restaurant)
+        val visitCount = visitRepository.countByPlace(place)
+        val lastVisit = visitRepository.findFirstByPlaceOrderByCreatedAtDesc(place)
 
         // 댓글은 @EntityGraph로 user+tags 한 번에 조회 (N+1 방지)
         val recentComments = commentRepository
-            .findTop3ByRestaurantAndIsDeletedFalseOrderByCreatedAtDesc(restaurant)
+            .findTop3ByPlaceAndIsDeletedFalseOrderByCreatedAtDesc(place)
 
         val today = LocalDate.now()
         val visitedToday = if (userId != null) {
-            visitRepository.existsByRestaurantIdAndUserIdAndCreatedAtBetween(
-                restaurant.id, userId, today.atStartOfDay(), today.atTime(LocalTime.MAX)
+            visitRepository.existsByPlaceIdAndUserIdAndCreatedAtBetween(
+                place.id, userId, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )
         } else false
 
         return PlaceStatsResponse(
-            restaurantId = restaurant.id,
+            placeId = place.id,
             visitCount = visitCount,
             avgRating = null,
             visitedToday = visitedToday,
-            priceRange = restaurant.priceRange?.name,
-            placeCategoryId = restaurant.placeCategoryId,
+            priceRange = place.priceRange?.name,
+            placeCategoryId = place.placeCategoryId,
             recentReviews = recentComments.map { comment ->
                 ReviewSummary(
                     nickname = comment.user.nickname,

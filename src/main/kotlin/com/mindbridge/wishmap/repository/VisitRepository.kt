@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.repository
 
-import com.mindbridge.wishmap.domain.restaurant.Restaurant
-import com.mindbridge.wishmap.domain.restaurant.Visit
+import com.mindbridge.wishmap.domain.place.Place
+import com.mindbridge.wishmap.domain.place.Visit
 import com.mindbridge.wishmap.domain.user.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -9,38 +9,38 @@ import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
 interface VisitRepository : JpaRepository<Visit, Long> {
-    fun existsByRestaurantAndUserAndCreatedAtBetween(
-        restaurant: Restaurant,
+    fun existsByPlaceAndUserAndCreatedAtBetween(
+        place: Place,
         user: User,
         start: LocalDateTime,
         end: LocalDateTime
     ): Boolean
 
-    @Query("SELECT COUNT(v) > 0 FROM Visit v WHERE v.restaurant.id = :restaurantId AND v.user.id = :userId AND v.createdAt BETWEEN :start AND :end")
-    fun existsByRestaurantIdAndUserIdAndCreatedAtBetween(
-        restaurantId: Long,
+    @Query("SELECT COUNT(v) > 0 FROM Visit v WHERE v.place.id = :placeId AND v.user.id = :userId AND v.createdAt BETWEEN :start AND :end")
+    fun existsByPlaceIdAndUserIdAndCreatedAtBetween(
+        placeId: Long,
         userId: Long,
         start: LocalDateTime,
         end: LocalDateTime
     ): Boolean
 
-    fun countByRestaurant(restaurant: Restaurant): Long
-    fun countByRestaurantAndUser(restaurant: Restaurant, user: User): Long
+    fun countByPlace(place: Place): Long
+    fun countByPlaceAndUser(place: Place, user: User): Long
 
-    @Query("SELECT AVG(v.rating) FROM Visit v WHERE v.restaurant = :restaurant AND v.rating IS NOT NULL")
-    fun findAvgRatingByRestaurant(restaurant: Restaurant): Double?
+    @Query("SELECT AVG(v.rating) FROM Visit v WHERE v.place = :place AND v.rating IS NOT NULL")
+    fun findAvgRatingByPlace(place: Place): Double?
 
     // 지정된 식당들의 주간 방문왕 (배치 조회용)
     @Query("""
-        SELECT v.restaurant.id, v.user.nickname, COUNT(v) as cnt
+        SELECT v.place.id, v.user.nickname, COUNT(v) as cnt
         FROM Visit v
-        WHERE v.restaurant.id IN :restaurantIds
+        WHERE v.place.id IN :placeIds
           AND v.createdAt >= :weekStart AND v.createdAt < :weekEnd
-        GROUP BY v.restaurant.id, v.user
-        ORDER BY v.restaurant.id, cnt DESC
+        GROUP BY v.place.id, v.user
+        ORDER BY v.place.id, cnt DESC
     """)
-    fun findWeeklyChampionsByRestaurantIds(
-        restaurantIds: List<Long>,
+    fun findWeeklyChampionsByPlaceIds(
+        placeIds: List<Long>,
         weekStart: LocalDateTime,
         weekEnd: LocalDateTime
     ): List<Array<Any>>
@@ -49,39 +49,39 @@ interface VisitRepository : JpaRepository<Visit, Long> {
     @Query("""
         SELECT v.user.id, COUNT(v)
         FROM Visit v
-        WHERE v.restaurant = :restaurant AND v.user IN :users
+        WHERE v.place = :place AND v.user IN :users
         GROUP BY v.user.id
     """)
-    fun countByRestaurantAndUsers(restaurant: Restaurant, users: List<User>): List<Array<Any>>
+    fun countByPlaceAndUsers(place: Place, users: List<User>): List<Array<Any>>
 
     @Query("""
-        SELECT v.restaurant.id, MAX(v.createdAt)
+        SELECT v.place.id, MAX(v.createdAt)
         FROM Visit v
-        WHERE v.user = :user AND v.restaurant.id IN :restaurantIds
-        GROUP BY v.restaurant.id
+        WHERE v.user = :user AND v.place.id IN :placeIds
+        GROUP BY v.place.id
     """)
-    fun findLastVisitDatesByUserAndRestaurantIds(user: User, restaurantIds: List<Long>): List<Array<Any>>
+    fun findLastVisitDatesByUserAndPlaceIds(user: User, placeIds: List<Long>): List<Array<Any>>
 
-    fun findFirstByRestaurantOrderByCreatedAtDesc(restaurant: Restaurant): Visit?
+    fun findFirstByPlaceOrderByCreatedAtDesc(place: Place): Visit?
 
     // 여러 식당의 마지막 방문일 (배치 조회)
     @Query("""
-        SELECT v.restaurant.id, MAX(v.createdAt)
+        SELECT v.place.id, MAX(v.createdAt)
         FROM Visit v
-        WHERE v.restaurant.id IN :restaurantIds
-        GROUP BY v.restaurant.id
+        WHERE v.place.id IN :placeIds
+        GROUP BY v.place.id
     """)
-    fun findLastVisitDatesByRestaurantIds(restaurantIds: List<Long>): List<Array<Any>>
+    fun findLastVisitDatesByPlaceIds(placeIds: List<Long>): List<Array<Any>>
 
     fun deleteAllByUser(user: User)
 
     // 여러 식당의 최다 보고 가격대 (배치 조회)
     @Query("""
-        SELECT v.restaurant.id, v.priceRange, COUNT(v) as cnt
+        SELECT v.place.id, v.priceRange, COUNT(v) as cnt
         FROM Visit v
-        WHERE v.restaurant IN :restaurants AND v.priceRange IS NOT NULL
-        GROUP BY v.restaurant.id, v.priceRange
-        ORDER BY v.restaurant.id, cnt DESC
+        WHERE v.place IN :places AND v.priceRange IS NOT NULL
+        GROUP BY v.place.id, v.priceRange
+        ORDER BY v.place.id, cnt DESC
     """)
-    fun findPriceRangesByRestaurants(restaurants: List<Restaurant>): List<Array<Any>>
+    fun findPriceRangesByPlaces(places: List<Place>): List<Array<Any>>
 }

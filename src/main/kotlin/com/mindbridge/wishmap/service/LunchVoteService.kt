@@ -22,7 +22,7 @@ class LunchVoteService(
     private val selectionRepository: LunchVoteSelectionRepository,
     private val groupRepository: GroupRepository,
     private val groupMemberRepository: GroupMemberRepository,
-    private val restaurantRepository: RestaurantRepository,
+    private val placeRepository: PlaceRepository,
     private val userRepository: UserRepository,
     private val notificationService: NotificationService
 ) {
@@ -55,9 +55,9 @@ class LunchVoteService(
         )
 
         // 초기 후보 추가
-        request.candidateRestaurantIds.forEach { restaurantId ->
-            val restaurant = restaurantRepository.findById(restaurantId).orElse(null) ?: return@forEach
-            candidateRepository.save(LunchVoteCandidate(vote = vote, restaurant = restaurant, addedBy = user))
+        request.candidatePlaceIds.forEach { placeId ->
+            val place = placeRepository.findById(placeId).orElse(null) ?: return@forEach
+            candidateRepository.save(LunchVoteCandidate(vote = vote, place = place, addedBy = user))
         }
 
         // 그룹 알림
@@ -95,14 +95,14 @@ class LunchVoteService(
         val vote = getActiveVoteOrThrow(groupId)
         requireNotExpired(vote)
 
-        if (candidateRepository.existsByVoteIdAndRestaurantId(vote.id, request.restaurantId)) {
+        if (candidateRepository.existsByVoteIdAndPlaceId(vote.id, request.placeId)) {
             throw BusinessException("이미 추가된 장소입니다")
         }
 
-        val restaurant = restaurantRepository.findById(request.restaurantId)
+        val place = placeRepository.findById(request.placeId)
             .orElseThrow { ResourceNotFoundException("장소를 찾을 수 없습니다") }
 
-        candidateRepository.save(LunchVoteCandidate(vote = vote, restaurant = restaurant, addedBy = user))
+        candidateRepository.save(LunchVoteCandidate(vote = vote, place = place, addedBy = user))
 
         return toResponse(vote, userId)
     }
@@ -171,7 +171,7 @@ class LunchVoteService(
         val winnerId = voteCounts.maxByOrNull { it[1] as Long }?.get(0) as? Long
         val winner = winnerId?.let { candidateRepository.findById(it).orElse(null) }
 
-        val message = winner?.let { "투표 결과: ${it.restaurant.name}" } ?: "투표가 마감되었습니다"
+        val message = winner?.let { "투표 결과: ${it.place.name}" } ?: "투표가 마감되었습니다"
 
         notificationService.notifyGroupMembers(
             groupId = vote.group.id,
@@ -225,12 +225,12 @@ class LunchVoteService(
             candidates = candidates.map { c ->
                 LunchVoteCandidateResponse(
                     id = c.id,
-                    restaurant = LunchVoteRestaurantSummary(
-                        id = c.restaurant.id,
-                        name = c.restaurant.name,
-                        category = c.restaurant.category,
-                        thumbnailImage = c.restaurant.thumbnailImage,
-                        priceRange = c.restaurant.priceRange?.name
+                    place = LunchVotePlaceSummary(
+                        id = c.place.id,
+                        name = c.place.name,
+                        category = c.place.category,
+                        thumbnailImage = c.place.thumbnailImage,
+                        priceRange = c.place.priceRange?.name
                     ),
                     addedBy = c.addedBy.nickname,
                     voteCount = voteCounts[c.id] ?: 0,

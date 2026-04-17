@@ -13,7 +13,7 @@ import java.util.UUID
 class ImageStorageService(
     @Value("\${supabase.url:}") private val supabaseUrl: String,
     @Value("\${supabase.key:}") private val supabaseKey: String,
-    @Value("\${supabase.bucket:restaurant-images}") private val bucket: String
+    @Value("\${supabase.bucket:place-images}") private val bucket: String
 ) {
 
     private val log = org.slf4j.LoggerFactory.getLogger(ImageStorageService::class.java)

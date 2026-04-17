@@ -1,9 +1,9 @@
 package com.mindbridge.wishmap.controller
 
-import com.mindbridge.wishmap.domain.restaurant.PriceRange
+import com.mindbridge.wishmap.domain.place.PriceRange
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.security.UserPrincipal
-import com.mindbridge.wishmap.service.RestaurantService
+import com.mindbridge.wishmap.service.PlaceService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
-class RestaurantController(
-    private val restaurantService: RestaurantService
+class PlaceController(
+    private val placeService: PlaceService
 ) {
 
-    @GetMapping("/restaurants", "/places")
-    fun getRestaurants(
+    @GetMapping("/places")
+    fun getPlaces(
         @RequestParam(required = false) minLat: Double?,
         @RequestParam(required = false) maxLat: Double?,
         @RequestParam(required = false) minLng: Double?,
@@ -35,7 +35,7 @@ class RestaurantController(
         @RequestParam(required = false) userLat: Double?,
         @RequestParam(required = false) userLng: Double?,
         @PageableDefault(size = 20) pageable: Pageable
-    ): ResponseEntity<Page<RestaurantListResponse>> {
+    ): ResponseEntity<Page<PlaceListResponse>> {
         val parsedPriceRange = priceRange?.let {
             try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
         }
@@ -46,67 +46,67 @@ class RestaurantController(
             require(minLng in -180.0..180.0 && maxLng in -180.0..180.0) { "경도는 -180~180 범위여야 합니다" }
             require(minLat <= maxLat) { "minLat은 maxLat 이하여야 합니다" }
             require(minLng <= maxLng) { "minLng은 maxLng 이하여야 합니다" }
-            ResponseEntity.ok(restaurantService.getRestaurants(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
+            ResponseEntity.ok(placeService.getPlaces(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
         } else {
-            ResponseEntity.ok(restaurantService.getRestaurantsWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable, userLat = userLat, userLng = userLng))
+            ResponseEntity.ok(placeService.getPlacesWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable, userLat = userLat, userLng = userLng))
         }
     }
 
-    @GetMapping("/restaurants/{id}", "/places/{id}")
-    fun getRestaurantDetail(
+    @GetMapping("/places/{id}")
+    fun getPlaceDetail(
         @PathVariable id: Long,
         @AuthenticationPrincipal user: UserPrincipal?
-    ): ResponseEntity<RestaurantDetailResponse> =
-        ResponseEntity.ok(restaurantService.getRestaurantDetail(id, user?.id))
+    ): ResponseEntity<PlaceDetailResponse> =
+        ResponseEntity.ok(placeService.getPlaceDetail(id, user?.id))
 
-    @PostMapping("/restaurants", "/places")
-    fun createRestaurant(
+    @PostMapping("/places")
+    fun createPlace(
         @AuthenticationPrincipal user: UserPrincipal,
-        @Valid @RequestBody request: CreateRestaurantRequest
-    ): ResponseEntity<RestaurantDetailResponse> =
-        ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.createRestaurant(user.id, request))
+        @Valid @RequestBody request: CreatePlaceRequest
+    ): ResponseEntity<PlaceDetailResponse> =
+        ResponseEntity.status(HttpStatus.CREATED).body(placeService.createPlace(user.id, request))
 
-    @GetMapping("/restaurants/my", "/places/my")
-    fun getMyRestaurants(
+    @GetMapping("/places/my")
+    fun getMyPlaces(
         @AuthenticationPrincipal user: UserPrincipal,
         @PageableDefault(size = 20) pageable: Pageable
-    ): ResponseEntity<Page<RestaurantListResponse>> =
-        ResponseEntity.ok(restaurantService.getMyRestaurants(user.id, pageable))
+    ): ResponseEntity<Page<PlaceListResponse>> =
+        ResponseEntity.ok(placeService.getMyPlaces(user.id, pageable))
 
-    @PostMapping("/restaurants/{id}/visit", "/places/{id}/visit")
+    @PostMapping("/places/{id}/visit")
     fun verifyVisit(
         @PathVariable id: Long,
         @AuthenticationPrincipal user: UserPrincipal,
         @Valid @RequestBody request: VisitVerifyRequest
     ): ResponseEntity<Map<String, Boolean>> {
-        restaurantService.verifyVisit(id, user.id, request)
+        placeService.verifyVisit(id, user.id, request)
         return ResponseEntity.ok(mapOf("visited" to true))
     }
 
-    @PostMapping("/restaurants/quick-visit", "/places/quick-visit")
+    @PostMapping("/places/quick-visit")
     fun quickVisit(
         @AuthenticationPrincipal user: UserPrincipal,
         @Valid @RequestBody request: QuickVisitRequest
     ): ResponseEntity<QuickVisitResponse> =
-        ResponseEntity.ok(restaurantService.quickVisit(user.id, request))
+        ResponseEntity.ok(placeService.quickVisit(user.id, request))
 
-    @GetMapping("/restaurants/stats/weekly-top", "/places/stats/weekly-top")
-    fun getWeeklyTop(): ResponseEntity<List<WeeklyTopRestaurant>> =
-        ResponseEntity.ok(restaurantService.getWeeklyTopRestaurants())
+    @GetMapping("/places/stats/weekly-top")
+    fun getWeeklyTop(): ResponseEntity<List<WeeklyTopPlace>> =
+        ResponseEntity.ok(placeService.getWeeklyTopPlaces())
 
-    @GetMapping("/restaurants/stats/popular", "/places/stats/popular")
-    fun getPopular(): ResponseEntity<List<PopularRestaurant>> =
-        ResponseEntity.ok(restaurantService.getPopularRestaurants())
+    @GetMapping("/places/stats/popular")
+    fun getPopular(): ResponseEntity<List<PopularPlace>> =
+        ResponseEntity.ok(placeService.getPopularPlaces())
 
-    @GetMapping("/restaurants/stats/category-summary", "/places/stats/category-summary")
+    @GetMapping("/places/stats/category-summary")
     fun getCategorySummary(): ResponseEntity<List<CategorySummary>> =
-        ResponseEntity.ok(restaurantService.getCategorySummary())
+        ResponseEntity.ok(placeService.getCategorySummary())
 
-    @GetMapping("/restaurants/place-stats", "/places/place-stats")
+    @GetMapping("/places/place-stats")
     fun getPlaceStats(
         @RequestParam naverPlaceId: String,
         @AuthenticationPrincipal user: UserPrincipal?
     ): ResponseEntity<PlaceStatsResponse> =
-        ResponseEntity.ok(restaurantService.getPlaceStats(naverPlaceId, user?.id))
+        ResponseEntity.ok(placeService.getPlaceStats(naverPlaceId, user?.id))
 
 }
