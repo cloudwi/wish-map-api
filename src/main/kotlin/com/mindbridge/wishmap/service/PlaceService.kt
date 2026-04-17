@@ -88,7 +88,11 @@ class PlaceService(
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
 
         val page = when (sort) {
-            "visits" -> placeRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            "visits" -> if (effectiveTags != null) {
+                placeRepository.findWithFiltersSortByVisitsWithTags(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
+            } else {
+                placeRepository.findWithFiltersSortByVisits(placeCategoryId, effectiveSearch, priceRange, pageable)
+            }
             "recentVisit" -> placeRepository.findWithFiltersSortByRecentVisit(placeCategoryId, effectiveSearch, priceRange, effectiveTags, pageable)
             "distance" -> {
                 require(userLat != null && userLng != null) { "userLat and userLng are required for distance sort" }
@@ -171,9 +175,7 @@ class PlaceService(
 
     private fun refreshChampionCache() {
         val (weekStart, weekEnd) = getWeekRange()
-        val results = visitRepository.findWeeklyChampionsByPlaceIds(
-            placeRepository.findAll().map { it.id }, weekStart, weekEnd
-        )
+        val results = visitRepository.findAllWeeklyChampions(weekStart, weekEnd)
         val newCache = mutableMapOf<Long, String>()
         for (row in results) {
             val placeId = row[0] as Long

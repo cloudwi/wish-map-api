@@ -30,17 +30,15 @@ interface VisitRepository : JpaRepository<Visit, Long> {
     @Query("SELECT AVG(v.rating) FROM Visit v WHERE v.place = :place AND v.rating IS NOT NULL")
     fun findAvgRatingByPlace(place: Place): Double?
 
-    // 지정된 식당들의 주간 방문왕 (배치 조회용)
+    // 지정된 기간의 모든 장소 주간 방문왕 (캐시 갱신용)
     @Query("""
         SELECT v.place.id, v.user.nickname, COUNT(v) as cnt
         FROM Visit v
-        WHERE v.place.id IN :placeIds
-          AND v.createdAt >= :weekStart AND v.createdAt < :weekEnd
+        WHERE v.createdAt >= :weekStart AND v.createdAt < :weekEnd
         GROUP BY v.place.id, v.user
         ORDER BY v.place.id, cnt DESC
     """)
-    fun findWeeklyChampionsByPlaceIds(
-        placeIds: List<Long>,
+    fun findAllWeeklyChampions(
         weekStart: LocalDateTime,
         weekEnd: LocalDateTime
     ): List<Array<Any>>

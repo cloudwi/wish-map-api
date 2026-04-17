@@ -123,33 +123,58 @@ interface PlaceRepository : JpaRepository<Place, Long> {
         pageable: Pageable
     ): Page<Place>
 
-    // 필터 + 검색 + 태그 + 방문 수 정렬 (list 탭용)
+    // 필터 + 검색 + 방문 수 정렬 (tags 없음 - Comment/CommentTag 조인 없이 고속 실행)
     @Query("""
         SELECT r FROM Place r
         LEFT JOIN Visit v ON v.place = r
-        LEFT JOIN Comment c ON c.place = r AND c.isDeleted = false
-        LEFT JOIN CommentTag ct ON ct.comment = c
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
-        AND (:tags IS NULL OR ct.tag IN :tags)
         GROUP BY r
-        ORDER BY COUNT(DISTINCT v) DESC, r.createdAt DESC
+        ORDER BY COUNT(v) DESC, r.createdAt DESC
     """,
     countQuery = """
-        SELECT COUNT(DISTINCT r) FROM Place r
-        LEFT JOIN Comment c ON c.place = r AND c.isDeleted = false
-        LEFT JOIN CommentTag ct ON ct.comment = c
+        SELECT COUNT(r) FROM Place r
         WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
         AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         AND (:priceRange IS NULL OR r.priceRange = :priceRange)
-        AND (:tags IS NULL OR ct.tag IN :tags)
     """)
     fun findWithFiltersSortByVisits(
         placeCategoryId: Long?,
         search: String?,
         priceRange: PriceRange?,
-        tags: List<String>?,
+        pageable: Pageable
+    ): Page<Place>
+
+    // 필터 + 검색 + 태그 + 방문 수 정렬 (태그 포함)
+    @Query("""
+        SELECT r FROM Place r
+        LEFT JOIN Visit v ON v.place = r
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND EXISTS (
+            SELECT 1 FROM Comment c JOIN c.tags ct
+            WHERE c.place = r AND c.isDeleted = false AND ct.tag IN :tags
+        )
+        GROUP BY r
+        ORDER BY COUNT(v) DESC, r.createdAt DESC
+    """,
+    countQuery = """
+        SELECT COUNT(r) FROM Place r
+        WHERE (:placeCategoryId IS NULL OR r.placeCategoryId = :placeCategoryId)
+        AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (:priceRange IS NULL OR r.priceRange = :priceRange)
+        AND EXISTS (
+            SELECT 1 FROM Comment c JOIN c.tags ct
+            WHERE c.place = r AND c.isDeleted = false AND ct.tag IN :tags
+        )
+    """)
+    fun findWithFiltersSortByVisitsWithTags(
+        placeCategoryId: Long?,
+        search: String?,
+        priceRange: PriceRange?,
+        tags: List<String>,
         pageable: Pageable
     ): Page<Place>
 

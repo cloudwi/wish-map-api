@@ -24,7 +24,7 @@ class TrendTagController(
 
     @GetMapping
     fun getTrendTags(): ResponseEntity<List<TrendTagResponse>> {
-        val categories = placeCategoryRepository.findByActiveTrueOrderByPriorityAsc()
+        val categories = placeCategoryRepository.findActiveBasic()
         val categoryMap = categories.associate { it.name to it.id }
 
         val tags = trendTagRepository.findByActiveTrueOrderByPriorityAsc().map { t ->
