@@ -8,10 +8,12 @@ import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.GroupMemberRepository
 import com.mindbridge.wishmap.repository.NotificationRepository
 import com.mindbridge.wishmap.repository.UserRepository
-import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class NotificationService(
@@ -22,8 +24,20 @@ class NotificationService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getNotifications(userId: Long, pageable: Pageable): Page<NotificationResponse> {
+    fun getNotifications(userId: Long, pageable: Pageable): Slice<NotificationResponse> {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+            .map { it.toResponse() }
+    }
+
+    // Keyset(cursor) 기반 알림 조회.
+    @Transactional(readOnly = true)
+    fun getNotificationsByCursor(
+        userId: Long,
+        cursorCreatedAt: LocalDateTime?,
+        cursorId: Long?,
+        size: Int
+    ): Slice<NotificationResponse> {
+        return notificationRepository.findByUserIdAndCursor(userId, cursorCreatedAt, cursorId, PageRequest.of(0, size))
             .map { it.toResponse() }
     }
 

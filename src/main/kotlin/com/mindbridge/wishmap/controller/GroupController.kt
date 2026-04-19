@@ -6,7 +6,7 @@ import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.service.GroupService
 import com.mindbridge.wishmap.service.PlaceService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
+import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -123,7 +123,7 @@ class GroupController(
         @RequestParam maxLng: Double,
         @RequestParam(required = false) priceRange: String?,
         @PageableDefault(size = 50) pageable: Pageable
-    ): ResponseEntity<Page<PlaceListResponse>> {
+    ): ResponseEntity<Slice<PlaceListResponse>> {
         val parsedPriceRange = priceRange?.let {
             try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
         }

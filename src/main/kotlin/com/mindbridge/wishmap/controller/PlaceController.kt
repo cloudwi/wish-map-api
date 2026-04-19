@@ -5,7 +5,7 @@ import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.service.PlaceService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
+import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -34,22 +34,55 @@ class PlaceController(
         @RequestParam(required = false) tag: String?, // TODO: 하위 호환 - 구버전 앱 지원, 추후 제거
         @RequestParam(required = false) userLat: Double?,
         @RequestParam(required = false) userLng: Double?,
+        // Keyset pagination 파라미터
+        // - 기본 최신순: cursorCreatedAt + cursorId
+        // - sortBy=visits: cursorVisitCount + cursorId
+        @RequestParam(required = false) cursorCreatedAt: java.time.LocalDateTime?,
+        @RequestParam(required = false) cursorId: Long?,
+        @RequestParam(required = false) cursorVisitCount: Long?,
         @PageableDefault(size = 20) pageable: Pageable
-    ): ResponseEntity<Page<PlaceListResponse>> {
+    ): ResponseEntity<Slice<PlaceListResponse>> {
         val parsedPriceRange = priceRange?.let {
             try { PriceRange.valueOf(it) } catch (_: IllegalArgumentException) { null }
         }
         // 하위 호환: 구버전 앱의 tag 파라미터를 tags로 병합
         val effectiveTags = tags ?: tag?.let { listOf(it) }
-        return if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
+
+        // bounds가 있으면 지도 기반 조회 (keyset 미적용, 공간 쿼리이므로 bounds 자체가 제한자)
+        if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
             require(minLat in -90.0..90.0 && maxLat in -90.0..90.0) { "위도는 -90~90 범위여야 합니다" }
             require(minLng in -180.0..180.0 && maxLng in -180.0..180.0) { "경도는 -180~180 범위여야 합니다" }
             require(minLat <= maxLat) { "minLat은 maxLat 이하여야 합니다" }
             require(minLng <= maxLng) { "minLng은 maxLng 이하여야 합니다" }
-            ResponseEntity.ok(placeService.getPlaces(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
-        } else {
-            ResponseEntity.ok(placeService.getPlacesWithFilters(category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags, pageable, userLat = userLat, userLng = userLng))
+            return ResponseEntity.ok(placeService.getPlaces(minLat, maxLat, minLng, maxLng, parsedPriceRange, placeCategoryId, effectiveTags, pageable))
         }
+
+        // 기본 최신순 cursor 경로
+        if (sortBy == null && cursorCreatedAt != null && cursorId != null) {
+            return ResponseEntity.ok(
+                placeService.getPlacesByCursor(
+                    placeCategoryId, search, parsedPriceRange, effectiveTags,
+                    cursorCreatedAt, cursorId, pageable.pageSize
+                )
+            )
+        }
+
+        // sortBy=visits cursor 경로 (복합 커서: visitCount + id)
+        if (sortBy == "visits" && cursorVisitCount != null && cursorId != null) {
+            return ResponseEntity.ok(
+                placeService.getPlacesByCursorSortByVisits(
+                    placeCategoryId, search, parsedPriceRange, effectiveTags,
+                    cursorVisitCount, cursorId, pageable.pageSize
+                )
+            )
+        }
+
+        return ResponseEntity.ok(
+            placeService.getPlacesWithFilters(
+                category, search, sortBy, parsedPriceRange, placeCategoryId, effectiveTags,
+                pageable, userLat = userLat, userLng = userLng
+            )
+        )
     }
 
     @GetMapping("/places/{id}")
@@ -69,9 +102,17 @@ class PlaceController(
     @GetMapping("/places/my")
     fun getMyPlaces(
         @AuthenticationPrincipal user: UserPrincipal,
+        @RequestParam(required = false) cursorCreatedAt: java.time.LocalDateTime?,
+        @RequestParam(required = false) cursorId: Long?,
         @PageableDefault(size = 20) pageable: Pageable
-    ): ResponseEntity<Page<PlaceListResponse>> =
-        ResponseEntity.ok(placeService.getMyPlaces(user.id, pageable))
+    ): ResponseEntity<Slice<PlaceListResponse>> {
+        val result = if (cursorCreatedAt != null && cursorId != null) {
+            placeService.getMyPlacesByCursor(user.id, cursorCreatedAt, cursorId, pageable.pageSize)
+        } else {
+            placeService.getMyPlaces(user.id, pageable)
+        }
+        return ResponseEntity.ok(result)
+    }
 
     @PostMapping("/places/{id}/visit")
     fun verifyVisit(

@@ -11,10 +11,13 @@ import com.mindbridge.wishmap.repository.CommentRepository
 import com.mindbridge.wishmap.repository.PlaceRepository
 import com.mindbridge.wishmap.repository.UserRepository
 import com.mindbridge.wishmap.repository.VisitRepository
-import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class CommentService(
@@ -26,18 +29,43 @@ class CommentService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getComments(placeId: Long, currentUserId: Long?, pageable: Pageable): Page<CommentResponse> {
+    fun getComments(placeId: Long, currentUserId: Long?, pageable: Pageable): Slice<CommentResponse> {
         val place = placeRepository.findById(placeId)
             .orElseThrow { ResourceNotFoundException("Place not found: $placeId") }
 
-        val page = commentRepository.findWithUserAndTagsByPlaceAndIsDeletedFalse(place, pageable)
+        val slice = commentRepository.findWithUserAndTagsByPlaceAndIsDeletedFalse(place, pageable)
+        return buildCommentResponse(place, slice, currentUserId, pageable)
+    }
 
+    // Keyset(cursor) 기반 댓글 조회. cursor 파라미터가 null이면 최신 댓글부터 조회.
+    @Transactional(readOnly = true)
+    fun getCommentsByCursor(
+        placeId: Long,
+        currentUserId: Long?,
+        cursorCreatedAt: LocalDateTime?,
+        cursorId: Long?,
+        size: Int
+    ): Slice<CommentResponse> {
+        val place = placeRepository.findById(placeId)
+            .orElseThrow { ResourceNotFoundException("Place not found: $placeId") }
+
+        val pageable = PageRequest.of(0, size)
+        val slice = commentRepository.findCommentsByCursor(place, cursorCreatedAt, cursorId, pageable)
+        return buildCommentResponse(place, slice, currentUserId, pageable)
+    }
+
+    private fun buildCommentResponse(
+        place: com.mindbridge.wishmap.domain.place.Place,
+        slice: Slice<com.mindbridge.wishmap.domain.comment.Comment>,
+        currentUserId: Long?,
+        pageable: Pageable
+    ): Slice<CommentResponse> {
         // 차단한 유저의 댓글 필터링
         val blockedIds = if (currentUserId != null) {
             blockedUserRepository.findBlockedUserIds(currentUserId).toSet()
         } else emptySet()
 
-        val filtered = page.content.filter { it.user.id !in blockedIds }
+        val filtered = slice.content.filter { it.user.id !in blockedIds }
 
         // 유저별 방문 횟수 배치 조회 (단일 쿼리)
         val distinctUsers = filtered.map { it.user }.distinct()
@@ -47,7 +75,8 @@ class CommentService(
         } else emptyMap()
 
         val responses = filtered.map { it.toResponse(currentUserId, visitCountMap[it.user.id] ?: 0) }
-        return org.springframework.data.domain.PageImpl(responses, pageable, page.totalElements)
+        // hasNext는 원본 slice 기준 (차단 필터링 후 개수가 줄어도 다음 페이지 존재 여부는 동일).
+        return SliceImpl(responses, pageable, slice.hasNext())
     }
 
     @Transactional

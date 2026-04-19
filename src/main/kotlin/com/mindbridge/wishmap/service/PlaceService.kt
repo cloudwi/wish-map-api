@@ -11,9 +11,9 @@ import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.*
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.DayOfWeek
@@ -49,7 +49,7 @@ class PlaceService(
         placeCategoryId: Long?,
         tags: List<String>?,
         pageable: Pageable
-    ): Page<PlaceListResponse> {
+    ): Slice<PlaceListResponse> {
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
         val page = if (effectiveTags != null) {
             placeRepository.findByLocationBoundsWithTags(
@@ -72,6 +72,72 @@ class PlaceService(
         }
     }
 
+    // Keyset + sortBy=visits. 복합 커서 (visitCount, id).
+    @Transactional(readOnly = true)
+    fun getPlacesByCursorSortByVisits(
+        placeCategoryId: Long?,
+        search: String?,
+        priceRange: PriceRange?,
+        tags: List<String>?,
+        cursorVisitCount: Long?,
+        cursorId: Long?,
+        size: Int
+    ): Slice<PlaceListResponse> {
+        val effectiveSearch = search?.takeIf { it.isNotBlank() }
+        val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
+        val hasTagFilter = effectiveTags != null
+        val tagsParam = effectiveTags ?: listOf("")
+
+        val slice = placeRepository.findWithFiltersSortByVisitsCursor(
+            placeCategoryId, effectiveSearch, priceRange, hasTagFilter, tagsParam,
+            cursorVisitCount, cursorId, PageRequest.of(0, size)
+        )
+        val visitCountMap = batchVisitCounts(slice.content)
+        val weeklyChampionMap = batchWeeklyChampions(slice.content)
+        val lastVisitMap = batchLastVisitedAt(slice.content)
+        return slice.map { place ->
+            place.toListResponse(
+                visitCount = visitCountMap[place.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[place.id],
+                lastVisitedAt = lastVisitMap[place.id]
+            )
+        }
+    }
+
+    // Keyset(cursor) 기반 기본 최신순 정렬 조회.
+    // sortBy=visits는 위 별도 메서드, recentVisit/distance는 복잡도 대비 이득이 적어 offset 유지.
+    @Transactional(readOnly = true)
+    fun getPlacesByCursor(
+        placeCategoryId: Long?,
+        search: String?,
+        priceRange: PriceRange?,
+        tags: List<String>?,
+        cursorCreatedAt: LocalDateTime?,
+        cursorId: Long?,
+        size: Int
+    ): Slice<PlaceListResponse> {
+        val effectiveSearch = search?.takeIf { it.isNotBlank() }
+        val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
+        val hasTagFilter = effectiveTags != null
+        // hasTagFilter=false인 경우 :tags 파라미터는 사용되지 않지만 Hibernate 바인딩용 더미 값 전달.
+        val tagsParam = effectiveTags ?: listOf("")
+
+        val slice = placeRepository.findWithFiltersByCursor(
+            placeCategoryId, effectiveSearch, priceRange, hasTagFilter, tagsParam,
+            cursorCreatedAt, cursorId, PageRequest.of(0, size)
+        )
+        val visitCountMap = batchVisitCounts(slice.content)
+        val weeklyChampionMap = batchWeeklyChampions(slice.content)
+        val lastVisitMap = batchLastVisitedAt(slice.content)
+        return slice.map { place ->
+            place.toListResponse(
+                visitCount = visitCountMap[place.id] ?: 0L,
+                weeklyChampion = weeklyChampionMap[place.id],
+                lastVisitedAt = lastVisitMap[place.id]
+            )
+        }
+    }
+
     @Transactional(readOnly = true)
     fun getPlacesWithFilters(
         category: String?,
@@ -83,7 +149,7 @@ class PlaceService(
         pageable: Pageable,
         userLat: Double? = null,
         userLng: Double? = null
-    ): Page<PlaceListResponse> {
+    ): Slice<PlaceListResponse> {
         val effectiveSearch = search?.takeIf { it.isNotBlank() }
         val effectiveTags = tags?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
 
@@ -119,8 +185,8 @@ class PlaceService(
     fun getPlacesByMembers(
         minLat: Double, maxLat: Double, minLng: Double, maxLng: Double,
         memberIds: List<Long>, priceRange: PriceRange?, pageable: Pageable
-    ): Page<PlaceListResponse> {
-        if (memberIds.isEmpty()) return Page.empty()
+    ): Slice<PlaceListResponse> {
+        if (memberIds.isEmpty()) return org.springframework.data.domain.SliceImpl(emptyList())
         val page = placeRepository.findByLocationBoundsAndMembers(minLat, maxLat, minLng, maxLng, memberIds, priceRange, pageable)
         val visitCountMap = batchVisitCounts(page.content)
         val weeklyChampionMap = batchWeeklyChampions(page.content)
@@ -305,19 +371,38 @@ class PlaceService(
     }
 
     @Transactional(readOnly = true)
-    fun getMyPlaces(userId: Long, pageable: Pageable): Page<PlaceListResponse> {
+    fun getMyPlaces(userId: Long, pageable: Pageable): Slice<PlaceListResponse> {
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
-        val page = placeRepository.findBySuggestedBy(user, pageable)
-        val visitCountMap = batchVisitCounts(page.content)
-        val weeklyChampionMap = batchWeeklyChampions(page.content)
-        val placeIds = page.content.map { it.id }
+        val slice = placeRepository.findBySuggestedBy(user, pageable)
+        return enrichMyPlaces(user, slice)
+    }
+
+    // Keyset(cursor) 기반 내 제보 목록 조회.
+    @Transactional(readOnly = true)
+    fun getMyPlacesByCursor(
+        userId: Long,
+        cursorCreatedAt: LocalDateTime?,
+        cursorId: Long?,
+        size: Int
+    ): Slice<PlaceListResponse> {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
+
+        val slice = placeRepository.findBySuggestedByCursor(user, cursorCreatedAt, cursorId, PageRequest.of(0, size))
+        return enrichMyPlaces(user, slice)
+    }
+
+    private fun enrichMyPlaces(user: User, slice: Slice<Place>): Slice<PlaceListResponse> {
+        val visitCountMap = batchVisitCounts(slice.content)
+        val weeklyChampionMap = batchWeeklyChampions(slice.content)
+        val placeIds = slice.content.map { it.id }
         val lastVisitMap = if (placeIds.isNotEmpty()) {
             visitRepository.findLastVisitDatesByUserAndPlaceIds(user, placeIds)
                 .associate { (it[0] as Long) to (it[1] as java.time.LocalDateTime) }
         } else emptyMap()
-        return page.map { place ->
+        return slice.map { place ->
             place.toListResponse(
                 visitCount = visitCountMap[place.id] ?: 0L,
                 weeklyChampion = weeklyChampionMap[place.id],
