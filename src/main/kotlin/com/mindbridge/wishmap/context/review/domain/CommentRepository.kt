@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.context.review.domain
 
 import com.mindbridge.wishmap.context.review.domain.Comment
-import com.mindbridge.wishmap.domain.place.Place
+import com.mindbridge.wishmap.context.place.domain.Place
 import com.mindbridge.wishmap.domain.user.User
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice

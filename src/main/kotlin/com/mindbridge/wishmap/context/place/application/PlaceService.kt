@@ -1,5 +1,10 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.context.place.application
 
+import com.mindbridge.wishmap.context.place.api.dto.*
+import com.mindbridge.wishmap.context.place.domain.Place
+import com.mindbridge.wishmap.context.place.domain.PlaceRepository
+import com.mindbridge.wishmap.context.place.domain.PriceRange
+import com.mindbridge.wishmap.context.place.infrastructure.NaverSearchService
 import com.mindbridge.wishmap.context.review.application.CommentService
 import com.mindbridge.wishmap.context.review.domain.Comment
 import com.mindbridge.wishmap.context.review.domain.CommentImage
@@ -7,13 +12,10 @@ import com.mindbridge.wishmap.context.review.domain.CommentRepository
 import com.mindbridge.wishmap.context.review.domain.CommentTag
 import com.mindbridge.wishmap.context.review.domain.Visit
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
-import com.mindbridge.wishmap.domain.place.PriceRange
-import com.mindbridge.wishmap.domain.place.Place
 import com.mindbridge.wishmap.domain.user.User
-import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
-import com.mindbridge.wishmap.repository.*
+import com.mindbridge.wishmap.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice

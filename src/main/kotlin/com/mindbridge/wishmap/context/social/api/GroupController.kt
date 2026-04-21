@@ -1,11 +1,11 @@
 package com.mindbridge.wishmap.context.social.api
 
 import com.mindbridge.wishmap.context.social.api.dto.*
-import com.mindbridge.wishmap.domain.place.PriceRange
-import com.mindbridge.wishmap.dto.PlaceListResponse
+import com.mindbridge.wishmap.context.place.domain.PriceRange
+import com.mindbridge.wishmap.context.place.api.dto.PlaceListResponse
 import com.mindbridge.wishmap.security.UserPrincipal
 import com.mindbridge.wishmap.context.social.application.GroupService
-import com.mindbridge.wishmap.service.PlaceService
+import com.mindbridge.wishmap.context.place.application.PlaceService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Pageable

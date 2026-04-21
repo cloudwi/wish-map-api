@@ -1,9 +1,10 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.context.place.api
 
-import com.mindbridge.wishmap.domain.place.PriceRange
-import com.mindbridge.wishmap.dto.*
+import com.mindbridge.wishmap.context.place.api.dto.*
+
+import com.mindbridge.wishmap.context.place.domain.PriceRange
 import com.mindbridge.wishmap.security.UserPrincipal
-import com.mindbridge.wishmap.service.PlaceService
+import com.mindbridge.wishmap.context.place.application.PlaceService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Pageable

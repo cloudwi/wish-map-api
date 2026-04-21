@@ -9,7 +9,7 @@ import com.mindbridge.wishmap.context.review.domain.CommentTag
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
-import com.mindbridge.wishmap.repository.PlaceRepository
+import com.mindbridge.wishmap.context.place.domain.PlaceRepository
 import com.mindbridge.wishmap.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -55,7 +55,7 @@ class CommentService(
     }
 
     private fun buildCommentResponse(
-        place: com.mindbridge.wishmap.domain.place.Place,
+        place: com.mindbridge.wishmap.context.place.domain.Place,
         slice: Slice<com.mindbridge.wishmap.context.review.domain.Comment>,
         currentUserId: Long?,
         pageable: Pageable

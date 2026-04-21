@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.repository
+package com.mindbridge.wishmap.context.place.domain
 
-import com.mindbridge.wishmap.domain.placecategory.PlaceCategory
+import com.mindbridge.wishmap.context.place.domain.PlaceCategory
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 

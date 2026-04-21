@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.dto
+package com.mindbridge.wishmap.context.place.api.dto
 
 data class PlaceCategoryResponse(
     val id: Long,

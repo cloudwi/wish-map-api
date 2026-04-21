@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.place
+package com.mindbridge.wishmap.context.place.domain
 
 enum class PriceRange(val label: String) {
     UNDER_10K("1만원 이하"),

@@ -1,8 +1,8 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.context.place.api
 
-import com.mindbridge.wishmap.dto.PlaceCategoryResponse
-import com.mindbridge.wishmap.dto.TagGroupResponse
-import com.mindbridge.wishmap.repository.PlaceCategoryRepository
+import com.mindbridge.wishmap.context.place.api.dto.PlaceCategoryResponse
+import com.mindbridge.wishmap.context.place.api.dto.TagGroupResponse
+import com.mindbridge.wishmap.context.place.domain.PlaceCategoryRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
