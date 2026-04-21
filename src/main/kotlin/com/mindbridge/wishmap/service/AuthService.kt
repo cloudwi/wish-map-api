@@ -8,16 +8,16 @@ import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
-import com.mindbridge.wishmap.repository.CommentRepository
-import com.mindbridge.wishmap.repository.FriendRepository
-import com.mindbridge.wishmap.repository.GroupMemberRepository
-import com.mindbridge.wishmap.repository.GroupRepository
+import com.mindbridge.wishmap.context.review.domain.CommentRepository
+import com.mindbridge.wishmap.context.social.domain.FriendRepository
+import com.mindbridge.wishmap.context.social.domain.GroupMemberRepository
+import com.mindbridge.wishmap.context.social.domain.GroupRepository
 import com.mindbridge.wishmap.context.notification.domain.NotificationRepository
 import com.mindbridge.wishmap.context.moderation.domain.ReportRepository
 import com.mindbridge.wishmap.repository.SocialAccountRepository
 import com.mindbridge.wishmap.context.moderation.domain.UserAgreementRepository
 import com.mindbridge.wishmap.repository.UserRepository
-import com.mindbridge.wishmap.repository.VisitRepository
+import com.mindbridge.wishmap.context.review.domain.VisitRepository
 import com.mindbridge.wishmap.security.JwtTokenProvider
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -128,7 +128,7 @@ class AuthService(
 
         // 그룹 멤버십 처리 (리더인 그룹은 다음 멤버에게 양도 또는 삭제)
         val memberships = groupMemberRepository.findAllByUserAndStatus(
-            user, com.mindbridge.wishmap.domain.group.MemberStatus.ACCEPTED
+            user, com.mindbridge.wishmap.context.social.domain.MemberStatus.ACCEPTED
         )
         for (membership in memberships) {
             val group = membership.group
@@ -137,11 +137,11 @@ class AuthService(
                 if (otherMembers > 0) {
                     // 다른 멤버에게 리더 양도
                     val nextLeader = group.members
-                        .filter { it.user.id != userId && it.status == com.mindbridge.wishmap.domain.group.MemberStatus.ACCEPTED }
+                        .filter { it.user.id != userId && it.status == com.mindbridge.wishmap.context.social.domain.MemberStatus.ACCEPTED }
                         .firstOrNull()
                     if (nextLeader != null) {
                         group.leader = nextLeader.user
-                        nextLeader.role = com.mindbridge.wishmap.domain.group.GroupRole.LEADER
+                        nextLeader.role = com.mindbridge.wishmap.context.social.domain.GroupRole.LEADER
                         groupRepository.save(group)
                     }
                 } else {
