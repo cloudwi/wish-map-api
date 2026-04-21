@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.dto
+package com.mindbridge.wishmap.context.identity.api.dto
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size

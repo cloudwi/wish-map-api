@@ -12,10 +12,10 @@ import com.mindbridge.wishmap.context.review.domain.CommentRepository
 import com.mindbridge.wishmap.context.review.domain.CommentTag
 import com.mindbridge.wishmap.context.review.domain.Visit
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
-import com.mindbridge.wishmap.domain.user.User
+import com.mindbridge.wishmap.context.identity.domain.User
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
-import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice

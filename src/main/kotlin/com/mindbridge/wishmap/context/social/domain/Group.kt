@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.context.social.domain
 
 import com.mindbridge.wishmap.domain.common.BaseEntity
-import com.mindbridge.wishmap.domain.user.User
+import com.mindbridge.wishmap.context.identity.domain.User
 import jakarta.persistence.*
 
 @Entity

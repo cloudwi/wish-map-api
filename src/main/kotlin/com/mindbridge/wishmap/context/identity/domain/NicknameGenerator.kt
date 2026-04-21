@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.user
+package com.mindbridge.wishmap.context.identity.domain
 
 object NicknameGenerator {
 

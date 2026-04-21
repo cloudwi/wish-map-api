@@ -1,7 +1,7 @@
-package com.mindbridge.wishmap.repository
+package com.mindbridge.wishmap.context.identity.domain
 
-import com.mindbridge.wishmap.domain.user.AuthProvider
-import com.mindbridge.wishmap.domain.user.SocialAccount
+import com.mindbridge.wishmap.context.identity.domain.AuthProvider
+import com.mindbridge.wishmap.context.identity.domain.SocialAccount
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.*
 
