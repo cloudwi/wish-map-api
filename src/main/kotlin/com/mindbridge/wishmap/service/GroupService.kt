@@ -112,12 +112,19 @@ class GroupService(
     fun getPendingInvites(userId: Long): List<GroupInviteResponse> {
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found") }
-        return groupMemberRepository.findAllByUserAndStatus(user, MemberStatus.PENDING).map { m ->
+        val invites = groupMemberRepository.findAllByUserAndStatus(user, MemberStatus.PENDING)
+        if (invites.isEmpty()) return emptyList()
+
+        val groupIds = invites.map { it.group.id }
+        val memberCounts = groupMemberRepository.countAcceptedMembersByGroupIds(groupIds)
+            .associate { it.groupId to it.cnt.toInt() }
+
+        return invites.map { m ->
             GroupInviteResponse(
                 groupId = m.group.id,
                 groupName = m.group.name,
                 leaderNickname = m.group.leader.nickname,
-                memberCount = groupMemberRepository.countAcceptedMembers(m.group),
+                memberCount = memberCounts[m.group.id] ?: 0,
                 invitedAt = m.createdAt.toString()
             )
         }
