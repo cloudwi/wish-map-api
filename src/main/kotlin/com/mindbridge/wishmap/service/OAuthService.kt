@@ -19,10 +19,18 @@ import java.util.*
 class OAuthService(
     private val webClient: WebClient,
     @Value("\${oauth.google.client-id:}") private val googleClientId: String,
+    @Value("\${oauth.google.allowed-audiences:}") private val googleAllowedAudiencesRaw: String,
     @Value("\${oauth.apple.client-id:}") private val appleClientId: String
 ) {
 
     private val log = LoggerFactory.getLogger(OAuthService::class.java)
+
+    private val googleAllowedAudiences: Set<String> by lazy {
+        (googleAllowedAudiencesRaw.split(",") + googleClientId)
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toSet()
+    }
 
     fun verifyTokenAndGetUserInfo(provider: AuthProvider, accessToken: String): OAuthUserInfo {
         return when (provider) {
@@ -80,8 +88,11 @@ class OAuthService(
         }
 
         // audience 검증 (idToken인 경우 aud 필드 존재)
+        // iOS/Android/Web 각각 다른 client ID를 발급하는 Google Sign-In 특성 상
+        // 여러 audience 허용. oauth.google.allowed-audiences (콤마 구분) + oauth.google.client-id 합집합.
         val aud = response["aud"]?.toString()
-        if (googleClientId.isNotBlank() && aud != null && aud != googleClientId) {
+        if (googleAllowedAudiences.isNotEmpty() && aud != null && aud !in googleAllowedAudiences) {
+            log.warn("Google token audience mismatch: received aud={}, allowed={}", aud, googleAllowedAudiences)
             throw IllegalArgumentException("Google token audience mismatch")
         }
 
