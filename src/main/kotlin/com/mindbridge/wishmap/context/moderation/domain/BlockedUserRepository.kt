@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.repository
+package com.mindbridge.wishmap.context.moderation.domain
 
-import com.mindbridge.wishmap.domain.moderation.BlockedUser
+import com.mindbridge.wishmap.context.moderation.domain.BlockedUser
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 

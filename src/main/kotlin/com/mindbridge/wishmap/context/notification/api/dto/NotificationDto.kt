@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.dto
+package com.mindbridge.wishmap.context.notification.api.dto
 
-import com.mindbridge.wishmap.domain.notification.NotificationType
+import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import java.time.LocalDateTime
 
 data class NotificationResponse(

@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.notification
+package com.mindbridge.wishmap.context.notification.domain
 
 import com.mindbridge.wishmap.domain.user.User
 import jakarta.persistence.*

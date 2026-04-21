@@ -1,6 +1,7 @@
 package com.mindbridge.wishmap.service
 
-import com.mindbridge.wishmap.domain.notification.NotificationType
+import com.mindbridge.wishmap.context.notification.application.NotificationService
+import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import com.mindbridge.wishmap.domain.user.Friend
 import com.mindbridge.wishmap.domain.user.FriendStatus
 import com.mindbridge.wishmap.dto.FriendResponse

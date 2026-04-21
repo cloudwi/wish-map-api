@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.context.notification.infrastructure
 
 import com.mindbridge.wishmap.repository.UserRepository
 import org.slf4j.LoggerFactory

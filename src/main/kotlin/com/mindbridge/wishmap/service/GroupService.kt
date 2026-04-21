@@ -4,7 +4,8 @@ import com.mindbridge.wishmap.domain.group.Group
 import com.mindbridge.wishmap.domain.group.GroupMember
 import com.mindbridge.wishmap.domain.group.GroupRole
 import com.mindbridge.wishmap.domain.group.MemberStatus
-import com.mindbridge.wishmap.domain.notification.NotificationType
+import com.mindbridge.wishmap.context.notification.application.NotificationService
+import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ForbiddenException
