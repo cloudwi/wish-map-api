@@ -1,5 +1,6 @@
 package com.mindbridge.wishmap.domain.place
 
+import com.mindbridge.wishmap.context.review.domain.Visit
 import com.mindbridge.wishmap.domain.common.BaseEntity
 import com.mindbridge.wishmap.domain.user.User
 import jakarta.persistence.*

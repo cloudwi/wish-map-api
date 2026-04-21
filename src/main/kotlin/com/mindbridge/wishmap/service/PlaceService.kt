@@ -1,11 +1,14 @@
 package com.mindbridge.wishmap.service
 
-import com.mindbridge.wishmap.domain.comment.Comment
-import com.mindbridge.wishmap.domain.comment.CommentImage
-import com.mindbridge.wishmap.domain.comment.CommentTag
+import com.mindbridge.wishmap.context.review.application.CommentService
+import com.mindbridge.wishmap.context.review.domain.Comment
+import com.mindbridge.wishmap.context.review.domain.CommentImage
+import com.mindbridge.wishmap.context.review.domain.CommentRepository
+import com.mindbridge.wishmap.context.review.domain.CommentTag
+import com.mindbridge.wishmap.context.review.domain.Visit
+import com.mindbridge.wishmap.context.review.domain.VisitRepository
 import com.mindbridge.wishmap.domain.place.PriceRange
 import com.mindbridge.wishmap.domain.place.Place
-import com.mindbridge.wishmap.domain.place.Visit
 import com.mindbridge.wishmap.domain.user.User
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.DuplicateResourceException
