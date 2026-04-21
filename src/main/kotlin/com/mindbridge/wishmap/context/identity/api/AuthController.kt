@@ -1,9 +1,10 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.context.identity.api
 
-import com.mindbridge.wishmap.domain.user.AuthProvider
-import com.mindbridge.wishmap.dto.*
+import com.mindbridge.wishmap.context.identity.api.dto.*
+
+import com.mindbridge.wishmap.context.identity.domain.AuthProvider
 import com.mindbridge.wishmap.security.UserPrincipal
-import com.mindbridge.wishmap.service.AuthService
+import com.mindbridge.wishmap.context.identity.application.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal

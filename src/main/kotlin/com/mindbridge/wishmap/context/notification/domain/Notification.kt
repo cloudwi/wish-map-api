@@ -1,6 +1,6 @@
 package com.mindbridge.wishmap.context.notification.domain
 
-import com.mindbridge.wishmap.domain.user.User
+import com.mindbridge.wishmap.context.identity.domain.User
 import jakarta.persistence.*
 import java.time.LocalDateTime
 

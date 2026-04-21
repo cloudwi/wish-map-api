@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.dto
+package com.mindbridge.wishmap.context.identity.api.dto
 
-import com.mindbridge.wishmap.domain.user.AuthProvider
+import com.mindbridge.wishmap.context.identity.domain.AuthProvider
 
 data class OAuthUserInfo(
     val provider: AuthProvider,

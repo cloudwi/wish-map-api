@@ -1,6 +1,6 @@
 package com.mindbridge.wishmap.security
 
-import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse

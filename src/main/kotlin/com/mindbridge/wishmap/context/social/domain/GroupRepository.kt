@@ -3,7 +3,7 @@ package com.mindbridge.wishmap.context.social.domain
 import com.mindbridge.wishmap.context.social.domain.Group
 import com.mindbridge.wishmap.context.social.domain.GroupMember
 import com.mindbridge.wishmap.context.social.domain.MemberStatus
-import com.mindbridge.wishmap.domain.user.User
+import com.mindbridge.wishmap.context.identity.domain.User
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query

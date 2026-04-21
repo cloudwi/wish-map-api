@@ -17,7 +17,7 @@ import com.mindbridge.wishmap.exception.BusinessException
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.context.place.domain.PlaceRepository
-import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

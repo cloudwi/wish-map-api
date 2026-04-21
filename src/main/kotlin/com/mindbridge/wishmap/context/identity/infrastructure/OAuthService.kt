@@ -1,7 +1,7 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.context.identity.infrastructure
 
-import com.mindbridge.wishmap.domain.user.AuthProvider
-import com.mindbridge.wishmap.dto.OAuthUserInfo
+import com.mindbridge.wishmap.context.identity.domain.AuthProvider
+import com.mindbridge.wishmap.context.identity.api.dto.OAuthUserInfo
 import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey

@@ -12,7 +12,7 @@ import com.mindbridge.wishmap.context.social.domain.MemberStatus
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
-import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

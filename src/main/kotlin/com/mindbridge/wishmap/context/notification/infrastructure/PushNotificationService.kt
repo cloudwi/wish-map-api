@@ -1,6 +1,6 @@
 package com.mindbridge.wishmap.context.notification.infrastructure
 
-import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient

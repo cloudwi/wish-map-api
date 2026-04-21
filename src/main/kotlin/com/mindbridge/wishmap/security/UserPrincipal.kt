@@ -1,6 +1,6 @@
 package com.mindbridge.wishmap.security
 
-import com.mindbridge.wishmap.domain.user.User
+import com.mindbridge.wishmap.context.identity.domain.User
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails

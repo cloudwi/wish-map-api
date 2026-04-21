@@ -1,10 +1,12 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.context.identity.application
 
-import com.mindbridge.wishmap.domain.user.AuthProvider
-import com.mindbridge.wishmap.domain.user.NicknameGenerator
-import com.mindbridge.wishmap.domain.user.SocialAccount
-import com.mindbridge.wishmap.domain.user.User
-import com.mindbridge.wishmap.dto.*
+import com.mindbridge.wishmap.context.identity.api.dto.*
+import com.mindbridge.wishmap.context.identity.infrastructure.OAuthService
+
+import com.mindbridge.wishmap.context.identity.domain.AuthProvider
+import com.mindbridge.wishmap.context.identity.domain.NicknameGenerator
+import com.mindbridge.wishmap.context.identity.domain.SocialAccount
+import com.mindbridge.wishmap.context.identity.domain.User
 import com.mindbridge.wishmap.exception.DuplicateResourceException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
@@ -14,9 +16,9 @@ import com.mindbridge.wishmap.context.social.domain.GroupMemberRepository
 import com.mindbridge.wishmap.context.social.domain.GroupRepository
 import com.mindbridge.wishmap.context.notification.domain.NotificationRepository
 import com.mindbridge.wishmap.context.moderation.domain.ReportRepository
-import com.mindbridge.wishmap.repository.SocialAccountRepository
+import com.mindbridge.wishmap.context.identity.domain.SocialAccountRepository
 import com.mindbridge.wishmap.context.moderation.domain.UserAgreementRepository
-import com.mindbridge.wishmap.repository.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
 import com.mindbridge.wishmap.security.JwtTokenProvider
 import org.slf4j.LoggerFactory
