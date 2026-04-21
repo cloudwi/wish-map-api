@@ -1,7 +1,7 @@
-package com.mindbridge.wishmap.dto
+package com.mindbridge.wishmap.context.place.api.dto
 
-import com.mindbridge.wishmap.domain.place.PriceRange
-import com.mindbridge.wishmap.domain.place.Place
+import com.mindbridge.wishmap.context.place.domain.PriceRange
+import com.mindbridge.wishmap.context.place.domain.Place
 import jakarta.validation.constraints.*
 import java.time.LocalDateTime
 

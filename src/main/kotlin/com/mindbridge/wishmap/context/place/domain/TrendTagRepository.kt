@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.repository
+package com.mindbridge.wishmap.context.place.domain
 
-import com.mindbridge.wishmap.domain.trendtag.TrendTag
+import com.mindbridge.wishmap.context.place.domain.TrendTag
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface TrendTagRepository : JpaRepository<TrendTag, Long> {

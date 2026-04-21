@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.context.place.infrastructure
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

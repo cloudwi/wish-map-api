@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.place
+package com.mindbridge.wishmap.context.place.domain
 
 import com.mindbridge.wishmap.context.review.domain.Visit
 import com.mindbridge.wishmap.domain.common.BaseEntity

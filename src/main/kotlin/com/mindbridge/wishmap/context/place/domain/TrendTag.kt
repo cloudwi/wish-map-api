@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.trendtag
+package com.mindbridge.wishmap.context.place.domain
 
 import jakarta.persistence.*
 import java.time.LocalDateTime

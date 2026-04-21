@@ -1,6 +1,6 @@
 package com.mindbridge.wishmap.context.lunchvote.api.dto
 
-import com.mindbridge.wishmap.dto.UserSummary
+import com.mindbridge.wishmap.context.place.api.dto.UserSummary
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDateTime
 

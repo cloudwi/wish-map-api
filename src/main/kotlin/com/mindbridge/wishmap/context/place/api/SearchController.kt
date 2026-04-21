@@ -1,4 +1,6 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.context.place.api
+
+import com.mindbridge.wishmap.context.place.api.dto.*
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

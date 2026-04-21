@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.context.review.api.dto
 
 import com.mindbridge.wishmap.context.review.domain.Comment
-import com.mindbridge.wishmap.dto.UserSummary
+import com.mindbridge.wishmap.context.place.api.dto.UserSummary
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
