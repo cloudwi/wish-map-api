@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.security
+package com.mindbridge.wishmap.infrastructure.security
 
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys

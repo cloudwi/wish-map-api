@@ -3,7 +3,7 @@ package com.mindbridge.wishmap.context.place.api
 import com.mindbridge.wishmap.context.place.api.dto.*
 
 import com.mindbridge.wishmap.context.place.domain.PriceRange
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.place.application.PlaceService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Slice
@@ -113,16 +113,6 @@ class PlaceController(
             placeService.getMyPlaces(user.id, pageable)
         }
         return ResponseEntity.ok(result)
-    }
-
-    @PostMapping("/places/{id}/visit")
-    fun verifyVisit(
-        @PathVariable id: Long,
-        @AuthenticationPrincipal user: UserPrincipal,
-        @Valid @RequestBody request: VisitVerifyRequest
-    ): ResponseEntity<Map<String, Boolean>> {
-        placeService.verifyVisit(id, user.id, request)
-        return ResponseEntity.ok(mapOf("visited" to true))
     }
 
     @PostMapping("/places/quick-visit")

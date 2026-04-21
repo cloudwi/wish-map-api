@@ -5,8 +5,8 @@ import com.mindbridge.wishmap.context.notification.domain.Notification
 import com.mindbridge.wishmap.context.notification.domain.NotificationRepository
 import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import com.mindbridge.wishmap.context.notification.infrastructure.PushNotificationService
-import com.mindbridge.wishmap.exception.ForbiddenException
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.ForbiddenException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.social.domain.GroupMemberRepository
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.data.domain.PageRequest

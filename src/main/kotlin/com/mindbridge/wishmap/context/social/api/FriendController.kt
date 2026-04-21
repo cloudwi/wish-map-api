@@ -2,7 +2,7 @@ package com.mindbridge.wishmap.context.social.api
 
 import com.mindbridge.wishmap.context.social.api.dto.*
 
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.social.application.FriendService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal

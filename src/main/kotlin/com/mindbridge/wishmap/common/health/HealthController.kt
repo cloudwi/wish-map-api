@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.common.health
 
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController

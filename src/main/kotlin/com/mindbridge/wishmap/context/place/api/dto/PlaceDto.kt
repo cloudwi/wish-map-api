@@ -75,18 +75,6 @@ data class UserSummary(
     val profileImage: String?
 )
 
-data class VisitVerifyRequest(
-    @field:NotNull(message = "위도는 필수입니다")
-    @field:DecimalMin(value = "-90.0", message = "유효한 위도 값이 아닙니다")
-    @field:DecimalMax(value = "90.0", message = "유효한 위도 값이 아닙니다")
-    val lat: Double,
-
-    @field:NotNull(message = "경도는 필수입니다")
-    @field:DecimalMin(value = "-180.0", message = "유효한 경도 값이 아닙니다")
-    @field:DecimalMax(value = "180.0", message = "유효한 경도 값이 아닙니다")
-    val lng: Double
-)
-
 data class QuickVisitRequest(
     @field:NotBlank(message = "가게 이름은 필수입니다")
     val name: String,

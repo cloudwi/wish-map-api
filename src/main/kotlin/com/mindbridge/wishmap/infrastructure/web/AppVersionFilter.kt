@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.config
+package com.mindbridge.wishmap.infrastructure.web
 
-import com.mindbridge.wishmap.repository.AppVersionControlRepository
+import com.mindbridge.wishmap.context.appversion.domain.AppVersionControlRepository
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse

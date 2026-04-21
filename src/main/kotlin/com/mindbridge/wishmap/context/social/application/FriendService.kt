@@ -8,7 +8,7 @@ import com.mindbridge.wishmap.context.social.api.dto.UserSearchResult
 import com.mindbridge.wishmap.context.social.domain.Friend
 import com.mindbridge.wishmap.context.social.domain.FriendRepository
 import com.mindbridge.wishmap.context.social.domain.FriendStatus
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

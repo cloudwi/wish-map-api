@@ -2,7 +2,7 @@ package com.mindbridge.wishmap.context.notification.api
 
 import com.mindbridge.wishmap.context.notification.api.dto.NotificationCountResponse
 import com.mindbridge.wishmap.context.notification.api.dto.NotificationResponse
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.notification.application.NotificationService
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice

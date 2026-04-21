@@ -13,8 +13,8 @@ import com.mindbridge.wishmap.context.review.domain.CommentTag
 import com.mindbridge.wishmap.context.review.domain.Visit
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
 import com.mindbridge.wishmap.context.identity.domain.User
-import com.mindbridge.wishmap.exception.DuplicateResourceException
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.DuplicateResourceException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -297,29 +297,6 @@ class PlaceService(
             createdAt = place.createdAt,
             updatedAt = place.updatedAt
         )
-    }
-
-    @Transactional
-    fun verifyVisit(placeId: Long, userId: Long, request: VisitVerifyRequest): Boolean {
-        val place = placeRepository.findById(placeId)
-            .orElseThrow { ResourceNotFoundException("Place not found: $placeId") }
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        val today = LocalDate.now()
-        if (visitRepository.existsByPlaceAndUserAndCreatedAtBetween(
-                place, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
-            )) {
-            throw DuplicateResourceException("오늘 이미 방문 인증한 장소입니다")
-        }
-
-        val distance = haversineDistance(request.lat, request.lng, place.lat, place.lng)
-        if (distance > VISIT_DISTANCE_LIMIT_METERS) {
-            throw IllegalArgumentException("장소에서 100m 이내에서만 방문 인증이 가능합니다")
-        }
-
-        visitRepository.save(Visit(place = place, user = user, priceRange = place.priceRange ?: PriceRange.RANGE_10K))
-        return true
     }
 
     private fun createPlaceFromQuickVisit(request: QuickVisitRequest, user: User): Place {

@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.config
+package com.mindbridge.wishmap.infrastructure.web
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest

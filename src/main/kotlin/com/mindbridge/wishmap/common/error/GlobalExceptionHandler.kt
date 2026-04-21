@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.exception
+package com.mindbridge.wishmap.common.error
 
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException

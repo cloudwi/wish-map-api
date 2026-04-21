@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.common
+package com.mindbridge.wishmap.common.time
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate

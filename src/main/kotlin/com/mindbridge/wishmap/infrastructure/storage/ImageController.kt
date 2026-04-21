@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.infrastructure.storage
 
-import com.mindbridge.wishmap.service.ImageStorageService
+import com.mindbridge.wishmap.infrastructure.storage.ImageStorageService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile

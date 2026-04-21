@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.exception
+package com.mindbridge.wishmap.common.error
 
 data class ErrorResponse(
     val code: String,

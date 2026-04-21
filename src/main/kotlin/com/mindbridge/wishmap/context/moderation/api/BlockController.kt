@@ -1,7 +1,7 @@
 package com.mindbridge.wishmap.context.moderation.api
 
 import com.mindbridge.wishmap.context.moderation.api.dto.BlockedUserResponse
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.moderation.application.ModerationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

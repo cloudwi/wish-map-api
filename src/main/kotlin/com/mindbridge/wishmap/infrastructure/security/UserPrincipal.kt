@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.security
+package com.mindbridge.wishmap.infrastructure.security
 
 import com.mindbridge.wishmap.context.identity.domain.User
 import org.springframework.security.core.GrantedAuthority

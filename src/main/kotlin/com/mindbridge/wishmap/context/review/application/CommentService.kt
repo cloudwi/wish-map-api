@@ -7,8 +7,8 @@ import com.mindbridge.wishmap.context.review.domain.CommentImage
 import com.mindbridge.wishmap.context.review.domain.CommentRepository
 import com.mindbridge.wishmap.context.review.domain.CommentTag
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
-import com.mindbridge.wishmap.exception.ForbiddenException
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.ForbiddenException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.place.domain.PlaceRepository
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.data.domain.PageRequest
