@@ -1,7 +1,7 @@
-package com.mindbridge.wishmap.repository
+package com.mindbridge.wishmap.context.moderation.domain
 
-import com.mindbridge.wishmap.domain.moderation.Report
-import com.mindbridge.wishmap.domain.moderation.ReportTargetType
+import com.mindbridge.wishmap.context.moderation.domain.Report
+import com.mindbridge.wishmap.context.moderation.domain.ReportTargetType
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ReportRepository : JpaRepository<Report, Long> {

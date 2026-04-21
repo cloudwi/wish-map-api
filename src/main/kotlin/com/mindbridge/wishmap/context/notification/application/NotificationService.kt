@@ -1,12 +1,13 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.context.notification.application
 
-import com.mindbridge.wishmap.domain.notification.Notification
-import com.mindbridge.wishmap.domain.notification.NotificationType
-import com.mindbridge.wishmap.dto.NotificationResponse
+import com.mindbridge.wishmap.context.notification.api.dto.NotificationResponse
+import com.mindbridge.wishmap.context.notification.domain.Notification
+import com.mindbridge.wishmap.context.notification.domain.NotificationRepository
+import com.mindbridge.wishmap.context.notification.domain.NotificationType
+import com.mindbridge.wishmap.context.notification.infrastructure.PushNotificationService
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
 import com.mindbridge.wishmap.repository.GroupMemberRepository
-import com.mindbridge.wishmap.repository.NotificationRepository
 import com.mindbridge.wishmap.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable

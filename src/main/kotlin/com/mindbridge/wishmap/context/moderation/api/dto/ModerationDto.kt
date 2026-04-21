@@ -1,7 +1,7 @@
-package com.mindbridge.wishmap.dto
+package com.mindbridge.wishmap.context.moderation.api.dto
 
-import com.mindbridge.wishmap.domain.moderation.ReportReason
-import com.mindbridge.wishmap.domain.moderation.ReportTargetType
+import com.mindbridge.wishmap.context.moderation.domain.ReportReason
+import com.mindbridge.wishmap.context.moderation.domain.ReportTargetType
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDateTime
 

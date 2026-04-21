@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.repository
+package com.mindbridge.wishmap.context.notification.domain
 
-import com.mindbridge.wishmap.domain.notification.Notification
+import com.mindbridge.wishmap.context.notification.domain.Notification
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository

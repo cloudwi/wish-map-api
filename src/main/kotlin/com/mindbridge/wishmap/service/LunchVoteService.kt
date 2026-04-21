@@ -4,7 +4,8 @@ import com.mindbridge.wishmap.domain.lunchvote.LunchVote
 import com.mindbridge.wishmap.domain.lunchvote.LunchVoteCandidate
 import com.mindbridge.wishmap.domain.lunchvote.LunchVoteSelection
 import com.mindbridge.wishmap.domain.lunchvote.LunchVoteStatus
-import com.mindbridge.wishmap.domain.notification.NotificationType
+import com.mindbridge.wishmap.context.notification.application.NotificationService
+import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.BusinessException
 import com.mindbridge.wishmap.exception.ForbiddenException

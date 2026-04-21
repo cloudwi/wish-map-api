@@ -6,7 +6,7 @@ import com.mindbridge.wishmap.domain.comment.CommentTag
 import com.mindbridge.wishmap.dto.*
 import com.mindbridge.wishmap.exception.ForbiddenException
 import com.mindbridge.wishmap.exception.ResourceNotFoundException
-import com.mindbridge.wishmap.repository.BlockedUserRepository
+import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
 import com.mindbridge.wishmap.repository.CommentRepository
 import com.mindbridge.wishmap.repository.PlaceRepository
 import com.mindbridge.wishmap.repository.UserRepository

@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.moderation
+package com.mindbridge.wishmap.context.moderation.domain
 
 import com.mindbridge.wishmap.domain.common.BaseTimeEntity
 import com.mindbridge.wishmap.domain.user.User

@@ -1,9 +1,9 @@
-package com.mindbridge.wishmap.controller
+package com.mindbridge.wishmap.context.notification.api
 
-import com.mindbridge.wishmap.dto.NotificationCountResponse
-import com.mindbridge.wishmap.dto.NotificationResponse
+import com.mindbridge.wishmap.context.notification.api.dto.NotificationCountResponse
+import com.mindbridge.wishmap.context.notification.api.dto.NotificationResponse
 import com.mindbridge.wishmap.security.UserPrincipal
-import com.mindbridge.wishmap.service.NotificationService
+import com.mindbridge.wishmap.context.notification.application.NotificationService
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.web.PageableDefault
