@@ -33,8 +33,11 @@ spring.servlet.multipart:
   max-request-size: 25MB
 
 # OAuth 설정 (공개 값 - 토큰 audience 검증용)
+# Google Sign-In은 iOS/Android/Web 각각 다른 client ID를 발급하므로
+# GOOGLE_ALLOWED_AUDIENCES (콤마 구분)로 허용 목록 추가 가능.
 oauth:
   google:
     client-id: 386596705781-6tep6l6v4ftslcrcbdipakl72d26k750.apps.googleusercontent.com
+    allowed-audiences: ${GOOGLE_ALLOWED_AUDIENCES:}
   apple:
     client-id: com.wishmap.app
