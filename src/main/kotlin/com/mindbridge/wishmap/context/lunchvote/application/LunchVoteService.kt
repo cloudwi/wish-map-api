@@ -13,9 +13,9 @@ import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import com.mindbridge.wishmap.context.social.domain.GroupMemberRepository
 import com.mindbridge.wishmap.context.social.domain.GroupRepository
 import com.mindbridge.wishmap.context.place.api.dto.UserSummary
-import com.mindbridge.wishmap.exception.BusinessException
-import com.mindbridge.wishmap.exception.ForbiddenException
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.BusinessException
+import com.mindbridge.wishmap.common.error.ForbiddenException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.place.domain.PlaceRepository
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.scheduling.annotation.Scheduled

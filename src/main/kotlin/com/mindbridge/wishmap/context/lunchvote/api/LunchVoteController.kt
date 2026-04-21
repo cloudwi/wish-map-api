@@ -2,7 +2,7 @@ package com.mindbridge.wishmap.context.lunchvote.api
 
 import com.mindbridge.wishmap.context.lunchvote.api.dto.*
 
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.lunchvote.application.LunchVoteService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

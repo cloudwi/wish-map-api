@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.exception
+package com.mindbridge.wishmap.common.error
 
 open class BusinessException(message: String) : RuntimeException(message)
 

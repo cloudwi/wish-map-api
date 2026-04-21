@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.service
+package com.mindbridge.wishmap.infrastructure.storage
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType

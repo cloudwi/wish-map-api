@@ -2,8 +2,8 @@ package com.mindbridge.wishmap.context.moderation.application
 
 import com.mindbridge.wishmap.context.moderation.api.dto.*
 import com.mindbridge.wishmap.context.moderation.domain.*
-import com.mindbridge.wishmap.exception.DuplicateResourceException
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.DuplicateResourceException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

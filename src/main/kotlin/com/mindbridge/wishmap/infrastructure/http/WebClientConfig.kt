@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.config
+package com.mindbridge.wishmap.infrastructure.http
 
 import io.netty.channel.ChannelOption
 import org.springframework.context.annotation.Bean

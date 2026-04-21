@@ -7,8 +7,8 @@ import com.mindbridge.wishmap.context.identity.domain.AuthProvider
 import com.mindbridge.wishmap.context.identity.domain.NicknameGenerator
 import com.mindbridge.wishmap.context.identity.domain.SocialAccount
 import com.mindbridge.wishmap.context.identity.domain.User
-import com.mindbridge.wishmap.exception.DuplicateResourceException
-import com.mindbridge.wishmap.exception.ResourceNotFoundException
+import com.mindbridge.wishmap.common.error.DuplicateResourceException
+import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
 import com.mindbridge.wishmap.context.review.domain.CommentRepository
 import com.mindbridge.wishmap.context.social.domain.FriendRepository
@@ -20,7 +20,7 @@ import com.mindbridge.wishmap.context.identity.domain.SocialAccountRepository
 import com.mindbridge.wishmap.context.moderation.domain.UserAgreementRepository
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import com.mindbridge.wishmap.context.review.domain.VisitRepository
-import com.mindbridge.wishmap.security.JwtTokenProvider
+import com.mindbridge.wishmap.infrastructure.security.JwtTokenProvider
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DataIntegrityViolationException

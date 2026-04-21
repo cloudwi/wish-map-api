@@ -1,6 +1,6 @@
-package com.mindbridge.wishmap.config
+package com.mindbridge.wishmap.infrastructure.security
 
-import com.mindbridge.wishmap.security.JwtAuthenticationFilter
+import com.mindbridge.wishmap.infrastructure.security.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod

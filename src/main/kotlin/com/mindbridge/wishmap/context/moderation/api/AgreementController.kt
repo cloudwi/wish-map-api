@@ -2,7 +2,7 @@ package com.mindbridge.wishmap.context.moderation.api
 
 import com.mindbridge.wishmap.context.moderation.domain.AgreementType
 import com.mindbridge.wishmap.context.moderation.api.dto.AgreementResponse
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.moderation.application.ModerationService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal

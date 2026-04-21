@@ -2,7 +2,7 @@ package com.mindbridge.wishmap.context.review.api
 
 import com.mindbridge.wishmap.context.review.api.dto.*
 
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.review.application.CommentService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable

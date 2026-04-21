@@ -1,4 +1,4 @@
-package com.mindbridge.wishmap.domain.appversion
+package com.mindbridge.wishmap.context.appversion.domain
 
 import jakarta.persistence.*
 import java.time.LocalDateTime

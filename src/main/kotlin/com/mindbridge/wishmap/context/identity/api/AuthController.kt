@@ -3,7 +3,7 @@ package com.mindbridge.wishmap.context.identity.api
 import com.mindbridge.wishmap.context.identity.api.dto.*
 
 import com.mindbridge.wishmap.context.identity.domain.AuthProvider
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.identity.application.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity

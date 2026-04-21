@@ -1,6 +1,6 @@
 package com.mindbridge.wishmap.context.review.domain
 
-import com.mindbridge.wishmap.domain.common.BaseTimeEntity
+import com.mindbridge.wishmap.common.time.BaseTimeEntity
 import com.mindbridge.wishmap.context.place.domain.Place
 import com.mindbridge.wishmap.context.place.domain.PriceRange
 import com.mindbridge.wishmap.context.identity.domain.User

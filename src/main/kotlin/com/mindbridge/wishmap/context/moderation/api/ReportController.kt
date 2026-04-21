@@ -2,7 +2,7 @@ package com.mindbridge.wishmap.context.moderation.api
 
 import com.mindbridge.wishmap.context.moderation.api.dto.CreateReportRequest
 import com.mindbridge.wishmap.context.moderation.api.dto.ReportResponse
-import com.mindbridge.wishmap.security.UserPrincipal
+import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.moderation.application.ModerationService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
