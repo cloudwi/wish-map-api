@@ -40,6 +40,13 @@ dependencies {
     // HTTP Client (for OAuth token verification)
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
+    // macOS 로컬 개발용 Netty DNS 네이티브 리졸버 (경고 제거용, Apple Silicon)
+    developmentOnly(
+        group = "io.netty",
+        name = "netty-resolver-dns-native-macos",
+        classifier = "osx-aarch_64"
+    )
+
     // Apple Sign-In JWT verification
     implementation("com.nimbusds:nimbus-jose-jwt:10.3")
     

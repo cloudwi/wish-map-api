@@ -20,11 +20,6 @@ spring:
 jwt:
   secret: local-dev-secret-key-do-not-use-in-production-1234567890
 
-naver:
-  search:
-    client-id: ${NAVER_SEARCH_CLIENT_ID:}
-    client-secret: ${NAVER_SEARCH_CLIENT_SECRET:}
-
 logging:
   level:
     com.mindbridge: DEBUG
