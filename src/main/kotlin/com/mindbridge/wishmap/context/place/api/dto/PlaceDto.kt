@@ -58,7 +58,6 @@ data class PlaceDetailResponse(
     val description: String?,
     val thumbnailImage: String?,
     val images: List<String>,
-    val suggestedBy: UserSummary,
     val visitCount: Long,
     val commentCount: Long,
     val isVisited: Boolean,

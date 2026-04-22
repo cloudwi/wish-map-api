@@ -302,11 +302,6 @@ class PlaceService(
             description = place.description,
             thumbnailImage = place.thumbnailImage,
             images = emptyList(),
-            suggestedBy = UserSummary(
-                id = place.suggestedBy.id,
-                nickname = place.suggestedBy.nickname,
-                profileImage = place.suggestedBy.profileImage
-            ),
             visitCount = visitCount,
             commentCount = commentCount,
             isVisited = isVisited,
