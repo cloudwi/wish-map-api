@@ -23,7 +23,7 @@ naver:
 
 # Supabase Storage (이미지 업로드)
 supabase:
-  url: ${SUPABASE_URL:https://bzlufgaifypdixrmvmga.supabase.co}
+  url: ${SUPABASE_URL:https://mwjziuaahwbycqsgvqye.supabase.co}
   key: ${SUPABASE_KEY:}
   bucket: wish-map-bucket
 
