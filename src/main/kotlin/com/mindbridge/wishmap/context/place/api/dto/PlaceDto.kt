@@ -45,7 +45,6 @@ data class PlaceListResponse(
     val weeklyChampion: String? = null,
     val priceRange: String?,
     val placeCategoryId: Long?,
-    val placeCategoryName: String? = null,
     val lastVisitedAt: java.time.LocalDateTime? = null
 )
 
@@ -65,7 +64,6 @@ data class PlaceDetailResponse(
     val isVisited: Boolean,
     val priceRange: String?,
     val placeCategoryId: Long?,
-    val placeCategoryName: String? = null,
     val lastVisitedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
@@ -150,8 +148,7 @@ data class WeeklyTopPlace(
     val category: String?,
     val thumbnailImage: String?,
     val visitCount: Long,
-    val placeCategoryId: Long?,
-    val placeCategoryName: String? = null
+    val placeCategoryId: Long?
 )
 
 data class PopularPlace(
@@ -160,8 +157,7 @@ data class PopularPlace(
     val category: String?,
     val thumbnailImage: String?,
     val totalVisitCount: Long,
-    val placeCategoryId: Long?,
-    val placeCategoryName: String? = null
+    val placeCategoryId: Long?
 )
 
 data class CategorySummary(
@@ -173,8 +169,7 @@ data class CategorySummary(
 fun Place.toListResponse(
     visitCount: Long,
     weeklyChampion: String? = null,
-    lastVisitedAt: java.time.LocalDateTime? = null,
-    placeCategoryName: String? = null
+    lastVisitedAt: java.time.LocalDateTime? = null
 ) = PlaceListResponse(
     id = id,
     name = name,
@@ -187,6 +182,5 @@ fun Place.toListResponse(
     weeklyChampion = weeklyChampion,
     priceRange = priceRange?.name,
     placeCategoryId = placeCategoryId,
-    placeCategoryName = placeCategoryName,
     lastVisitedAt = lastVisitedAt
 )

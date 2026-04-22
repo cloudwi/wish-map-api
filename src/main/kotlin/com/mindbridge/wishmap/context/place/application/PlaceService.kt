@@ -3,7 +3,6 @@ package com.mindbridge.wishmap.context.place.application
 import com.mindbridge.wishmap.context.place.api.dto.*
 import com.mindbridge.wishmap.context.place.domain.NaverCategoryMappingRepository
 import com.mindbridge.wishmap.context.place.domain.Place
-import com.mindbridge.wishmap.context.place.domain.PlaceCategoryRepository
 import com.mindbridge.wishmap.context.place.domain.PlaceRepository
 import com.mindbridge.wishmap.context.place.domain.PriceRange
 import com.mindbridge.wishmap.context.place.infrastructure.NaverSearchService
@@ -39,7 +38,6 @@ class PlaceService(
     private val commentRepository: CommentRepository,
     private val visitRepository: VisitRepository,
     private val naverSearchService: NaverSearchService,
-    private val placeCategoryRepository: PlaceCategoryRepository,
     private val naverCategoryMappingRepository: NaverCategoryMappingRepository
 ) {
 
@@ -47,9 +45,6 @@ class PlaceService(
         private const val VISIT_DISTANCE_LIMIT_METERS = 100.0
         private const val EARTH_RADIUS_METERS = 6_371_000.0
     }
-
-    private fun loadCategoryNameMap(): Map<Long, String> =
-        placeCategoryRepository.findActiveBasic().associate { it.id to it.name }
 
     /**
      * 네이버 카테고리 원문 → 앱 place_categories.id.
