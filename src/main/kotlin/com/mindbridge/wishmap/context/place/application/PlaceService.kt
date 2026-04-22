@@ -1,6 +1,7 @@
 package com.mindbridge.wishmap.context.place.application
 
 import com.mindbridge.wishmap.context.place.api.dto.*
+import com.mindbridge.wishmap.context.place.domain.NaverCategoryMappingRepository
 import com.mindbridge.wishmap.context.place.domain.Place
 import com.mindbridge.wishmap.context.place.domain.PlaceCategoryRepository
 import com.mindbridge.wishmap.context.place.domain.PlaceRepository
@@ -38,95 +39,33 @@ class PlaceService(
     private val commentRepository: CommentRepository,
     private val visitRepository: VisitRepository,
     private val naverSearchService: NaverSearchService,
-    private val placeCategoryRepository: PlaceCategoryRepository
+    private val placeCategoryRepository: PlaceCategoryRepository,
+    private val naverCategoryMappingRepository: NaverCategoryMappingRepository
 ) {
 
     companion object {
         private const val VISIT_DISTANCE_LIMIT_METERS = 100.0
         private const val EARTH_RADIUS_METERS = 6_371_000.0
-
-        // 네이버 지역검색 category 최상위 → 앱 place_categories.name 매핑.
-        // Why: 네이버는 공식 카테고리 목록을 공개하지 않아(가변적) 완전 커버 불가.
-        //      id는 DB에서 동적 조회 (하드코딩 금지), name은 place_categories와 일치해야 함.
-        private val NAVER_TO_APP_CATEGORY_NAME = mapOf(
-            // 음식점
-            "한식" to "음식점", "중식" to "음식점", "양식" to "음식점", "일식" to "음식점",
-            "분식" to "음식점", "아시아음식" to "음식점", "퓨전요리" to "음식점",
-            "뷔페" to "음식점", "치킨" to "음식점", "패스트푸드" to "음식점",
-            "술집" to "음식점", "도시락" to "음식점", "간식" to "음식점",
-            // 카페,디저트
-            "카페,디저트" to "카페,디저트", "빵,케익,샌드위치" to "카페,디저트",
-            // 쇼핑,유통
-            "마트" to "쇼핑,유통", "백화점" to "쇼핑,유통",
-            "의류" to "쇼핑,유통", "신발" to "쇼핑,유통",
-            // 생활,편의
-            "편의점" to "생활,편의", "세탁" to "생활,편의",
-            "미용실" to "생활,편의", "부동산" to "생활,편의",
-            // 여행,숙박
-            "숙박" to "여행,숙박", "펜션" to "여행,숙박",
-            "모텔" to "여행,숙박", "호텔" to "여행,숙박",
-            // 문화,예술
-            "영화관" to "문화,예술", "박물관" to "문화,예술", "공연장" to "문화,예술",
-            // 교육,학문
-            "학원" to "교육,학문", "학교" to "교육,학문", "도서관" to "교육,학문",
-            // 의료,건강
-            "병원" to "의료,건강", "의원" to "의료,건강", "약국" to "의료,건강",
-        )
     }
 
     private fun loadCategoryNameMap(): Map<Long, String> =
         placeCategoryRepository.findActiveBasic().associate { it.id to it.name }
 
-    private fun loadCategoryIdByName(): Map<String, Long> =
-        placeCategoryRepository.findActiveBasic().associate { it.name to it.id }
-
     /**
-     * 네이버 지역검색 category 원문에서 앱 카테고리 **이름**을 해석. 예) "한식>육류,고기요리" → "음식점"
-     * 매칭 실패 시 null.
+     * 네이버 카테고리 원문 → 앱 place_categories.id.
+     * 원문의 최상단("`>`" 앞) 키워드로 naver_category_mapping 테이블을 조회해 id를 얻는다.
+     * 매핑이 없으면 null + WARN 로그 (운영에서 로그 보고 SQL로 매핑 추가).
      */
-    private fun resolveAppCategoryName(naverCategory: String?): String? {
+    private fun resolvePlaceCategoryId(naverCategory: String?): Long? {
         if (naverCategory.isNullOrBlank()) return null
         val top = naverCategory.substringBefore('>').trim()
         if (top.isEmpty()) return null
 
-        NAVER_TO_APP_CATEGORY_NAME[top]?.let { return it }
-
-        return when {
-            top.contains("카페") || top.contains("디저트") || top.contains("빵") -> "카페,디저트"
-            top.contains("마트") || top.contains("백화점") || top.contains("의류")
-                || top.contains("쇼핑") || top.contains("잡화") -> "쇼핑,유통"
-            top.contains("편의") || top.contains("세탁") || top.contains("미용")
-                || top.contains("부동산") || top.contains("철물") -> "생활,편의"
-            top.contains("숙박") || top.contains("호텔") || top.contains("펜션")
-                || top.contains("모텔") || top.contains("관광") || top.contains("리조트") -> "여행,숙박"
-            top.contains("영화") || top.contains("박물관") || top.contains("공연")
-                || top.contains("미술") || top.contains("전시") -> "문화,예술"
-            top.contains("학원") || top.contains("학교") || top.contains("도서")
-                || top.contains("교육") -> "교육,학문"
-            top.contains("병원") || top.contains("의원") || top.contains("약국")
-                || top.contains("치과") || top.contains("한의원") -> "의료,건강"
-            top.matches(Regex(".*(요리|고기|뷔페|치킨|피자|면|국|탕|찌개|구이).*")) -> "음식점"
-            else -> null
-        }
-    }
-
-    /**
-     * 네이버 카테고리 원문 → 앱 place_categories.id. 이름으로 해석 후 DB 조회해 id 획득.
-     * 매칭 실패 또는 DB에 해당 이름 없으면 null + WARN 로그 (운영에서 모니터링 후 매핑 보강).
-     */
-    private fun resolvePlaceCategoryId(naverCategory: String?): Long? {
-        val appName = resolveAppCategoryName(naverCategory)
-        if (appName == null) {
-            if (!naverCategory.isNullOrBlank()) {
-                log.warn("네이버 카테고리 매핑 실패: naverCategory={}", naverCategory)
+        return naverCategoryMappingRepository.findByNaverTop(top)?.placeCategoryId
+            ?: run {
+                log.warn("네이버 카테고리 매핑 없음: top={} (원문: {})", top, naverCategory)
+                null
             }
-            return null
-        }
-        val id = loadCategoryIdByName()[appName]
-        if (id == null) {
-            log.warn("place_categories에 '{}' 이름 없음 (네이버 원문: {})", appName, naverCategory)
-        }
-        return id
     }
 
     @Transactional(readOnly = true)
