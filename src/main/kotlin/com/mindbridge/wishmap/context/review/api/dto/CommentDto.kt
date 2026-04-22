@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
 data class CreateCommentRequest(
-    @field:Size(max = 1000, message = "댓글은 1000자 이하여야 합니다")
+    @field:Size(max = 120, message = "댓글은 120자 이하여야 합니다")
     val content: String = "",
 
     val tags: List<String> = emptyList(),
@@ -16,7 +16,7 @@ data class CreateCommentRequest(
 )
 
 data class UpdateCommentRequest(
-    @field:Size(max = 1000, message = "댓글은 1000자 이하여야 합니다")
+    @field:Size(max = 120, message = "댓글은 120자 이하여야 합니다")
     val content: String = "",
 
     val tags: List<String> = emptyList()

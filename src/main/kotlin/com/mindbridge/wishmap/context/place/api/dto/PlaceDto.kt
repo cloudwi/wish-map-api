@@ -101,7 +101,7 @@ data class QuickVisitRequest(
     @field:DecimalMax(value = "180.0", message = "유효한 경도 값이 아닙니다")
     val userLng: Double,
 
-    @field:Size(max = 2000)
+    @field:Size(max = 120, message = "방문 평은 120자 이하여야 합니다")
     val comment: String? = null,
 
     val tags: List<String> = emptyList(),
