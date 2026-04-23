@@ -67,7 +67,8 @@ data class PlaceDetailResponse(
     val placeCategoryId: Long?,
     val lastVisitedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val updatedAt: LocalDateTime,
+    val topTags: List<TagStatResponse> = emptyList()
 )
 
 data class UserSummary(
@@ -169,6 +170,11 @@ data class CategorySummary(
     val placeCategoryId: Long,
     val name: String,
     val placeCount: Long
+)
+
+data class TagStatResponse(
+    val tag: String,
+    val count: Long
 )
 
 fun Place.toListResponse(

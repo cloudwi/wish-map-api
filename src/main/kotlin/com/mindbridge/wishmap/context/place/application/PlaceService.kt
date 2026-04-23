@@ -292,6 +292,13 @@ class PlaceService(
                 place, user, today.atStartOfDay(), today.atTime(LocalTime.MAX)
             )
 
+        // 상위 태그 집계: 댓글이 0개면 JOIN 결과도 공집합이므로 count=0일 때 쿼리 스킵.
+        val topTags = if (commentCount > 0L) {
+            commentRepository
+                .findTagStatsByPlaceId(place.id, PageRequest.of(0, 10))
+                .map { row -> TagStatResponse(tag = row[0] as String, count = (row[1] as Number).toLong()) }
+        } else emptyList()
+
         return PlaceDetailResponse(
             id = place.id,
             name = place.name,
@@ -309,7 +316,8 @@ class PlaceService(
             placeCategoryId = place.placeCategoryId,
             lastVisitedAt = lastVisit?.createdAt,
             createdAt = place.createdAt,
-            updatedAt = place.updatedAt
+            updatedAt = place.updatedAt,
+            topTags = topTags
         )
     }
 

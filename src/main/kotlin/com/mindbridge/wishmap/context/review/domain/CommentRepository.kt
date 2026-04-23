@@ -47,4 +47,15 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     @Modifying
     @Query("UPDATE Comment c SET c.isDeleted = true WHERE c.user = :user AND c.isDeleted = false")
     fun softDeleteAllByUser(user: User)
+
+    // 장소별 태그 집계: place의 삭제되지 않은 댓글에서 tag별 빈도 계산 (count desc).
+    // Pageable로 LIMIT 제어 (Spring Data JPA 관례).
+    @Query("""
+        SELECT ct.tag AS tag, COUNT(ct.id) AS cnt
+        FROM Comment c JOIN c.tags ct
+        WHERE c.place.id = :placeId AND c.isDeleted = false
+        GROUP BY ct.tag
+        ORDER BY COUNT(ct.id) DESC, ct.tag ASC
+    """)
+    fun findTagStatsByPlaceId(placeId: Long, pageable: Pageable): List<Array<Any>>
 }
