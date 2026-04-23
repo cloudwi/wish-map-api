@@ -346,8 +346,10 @@ class PlaceService(
         val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found: $userId") }
 
-        if (request.naverPlaceId != null && placeRepository.existsByNaverPlaceId(request.naverPlaceId)) {
-            throw IllegalArgumentException("이미 등록된 장소입니다")
+        if (request.naverPlaceId != null) {
+            placeRepository.findByNaverPlaceId(request.naverPlaceId)?.let {
+                return getPlaceDetail(it.id, userId)
+            }
         }
 
         val fallback = request.category?.takeIf { it.isNotBlank() }?.let { "${request.name} $it" }
@@ -561,9 +563,15 @@ class PlaceService(
         val visitCount = visitRepository.countByPlace(place)
         val lastVisit = visitRepository.findFirstByPlaceOrderByCreatedAtDesc(place)
 
-        // 댓글은 @EntityGraph로 user+tags 한 번에 조회 (N+1 방지)
-        val recentComments = commentRepository
+        // 1) user fetch + LIMIT 3 (DB 페이지네이션)
+        // 2) tags 컬렉션은 분리 조회 (HHH90003004 회피)
+        val topComments = commentRepository
             .findTop3ByPlaceAndIsDeletedFalseOrderByCreatedAtDesc(place)
+        val recentComments = if (topComments.isNotEmpty()) {
+            val tagsById = commentRepository.findAllWithTagsByIdIn(topComments.map { it.id })
+                .associateBy { it.id }
+            topComments.map { tagsById[it.id] ?: it }
+        } else topComments
 
         val today = LocalDate.now()
         val visitedToday = if (userId != null) {

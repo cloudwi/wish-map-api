@@ -61,6 +61,8 @@ data class PlaceDetailResponse(
     val visitCount: Long,
     val commentCount: Long,
     val isVisited: Boolean,
+    // isVisited와 동일하나 프론트 네이밍 일원화용(오늘 방문 여부). 신규 추가.
+    val visitedToday: Boolean = isVisited,
     val priceRange: String?,
     val placeCategoryId: Long?,
     val lastVisitedAt: LocalDateTime? = null,
@@ -118,6 +120,8 @@ data class QuickVisitRequest(
 
 data class QuickVisitResponse(
     val placeId: Long,
+    // 프론트 하위호환용. placeId와 동일.
+    val restaurantId: Long = placeId,
     val visited: Boolean,
     val isNew: Boolean
 )
@@ -132,6 +136,8 @@ data class ReviewSummary(
 
 data class PlaceStatsResponse(
     val placeId: Long,
+    // 프론트 하위호환용. placeId와 동일. placeId==0(미등록)이면 null로 내려서 클라이언트 분기를 명확히.
+    val restaurantId: Long? = if (placeId == 0L) null else placeId,
     val visitCount: Long,
     val avgRating: Double?,
     val visitedToday: Boolean,

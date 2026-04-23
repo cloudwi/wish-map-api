@@ -15,8 +15,12 @@ import java.time.LocalDateTime
 interface CommentRepository : JpaRepository<Comment, Long> {
     fun findByPlaceAndIsDeletedFalse(place: Place, pageable: Pageable): Slice<Comment>
     fun countByPlaceAndIsDeletedFalse(place: Place): Long
-    @EntityGraph(attributePaths = ["user", "tags"])
+    @EntityGraph(attributePaths = ["user"])
     fun findTop3ByPlaceAndIsDeletedFalseOrderByCreatedAtDesc(place: Place): List<Comment>
+
+    @EntityGraph(attributePaths = ["tags"])
+    @Query("SELECT c FROM Comment c WHERE c.id IN :ids")
+    fun findAllWithTagsByIdIn(ids: Collection<Long>): List<Comment>
 
     @EntityGraph(attributePaths = ["user"])
     fun findWithUserAndTagsByPlaceAndIsDeletedFalse(place: Place, pageable: Pageable): Slice<Comment>
