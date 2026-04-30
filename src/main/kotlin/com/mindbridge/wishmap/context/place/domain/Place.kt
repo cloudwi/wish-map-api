@@ -34,9 +34,10 @@ class Place(
     @Column(name = "place_category_id")
     var placeCategoryId: Long? = null,
 
+    // 제보자가 탈퇴하면 SET NULL 로 익명화 (장소 자체는 동료들이 계속 사용)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "suggested_by", nullable = false)
-    val suggestedBy: User,
+    @JoinColumn(name = "suggested_by")
+    var suggestedBy: User?,
 
     @OneToMany(mappedBy = "place", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val visits: MutableList<Visit> = mutableListOf()
