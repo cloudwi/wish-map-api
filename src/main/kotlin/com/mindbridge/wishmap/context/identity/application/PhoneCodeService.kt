@@ -24,7 +24,7 @@ class PhoneCodeService(
     private val sender: SmsSender,
     private val jdbc: JdbcTemplate,
     @Value("\${jwt.secret}") private val codeSecret: String,
-    @Value("\${sms.max-daily-sends:100}") private val maxDailySends: Int
+    @Value("\${sms.max-daily-sends:20}") private val maxDailySends: Int
 ) {
     private val random = SecureRandom()
 
