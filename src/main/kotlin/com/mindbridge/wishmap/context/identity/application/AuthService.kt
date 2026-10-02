@@ -6,6 +6,7 @@ import com.mindbridge.wishmap.context.identity.api.dto.*
 import com.mindbridge.wishmap.context.identity.domain.NicknameGenerator
 import com.mindbridge.wishmap.context.identity.domain.User
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
+import com.mindbridge.wishmap.context.identity.domain.PhoneVerificationRepository
 import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
 import com.mindbridge.wishmap.context.moderation.domain.ReportRepository
 import com.mindbridge.wishmap.context.moderation.domain.UserAgreementRepository
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AuthService(
     private val userRepository: UserRepository,
+    private val phoneVerifications: PhoneVerificationRepository,
     private val phoneCodes: PhoneCodeService,
     private val jwtTokenProvider: JwtTokenProvider,
     private val notificationRepository: NotificationRepository,
@@ -52,6 +54,7 @@ class AuthService(
         reportRepository.deleteAllByReporterId(userId)
         blockedUserRepository.deleteAllByBlockerIdOrBlockedId(userId, userId)
         userAgreementRepository.deleteAllByUserId(userId)
+        user.phone?.let { phoneVerifications.deleteById(it) }
         userRepository.delete(user)
     }
 

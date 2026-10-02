@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
@@ -23,4 +24,8 @@ interface PhoneVerificationRepository : JpaRepository<PhoneVerification, String>
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select v from PhoneVerification v where v.phone = :phone")
     fun lockByPhone(@Param("phone") phone: String): PhoneVerification?
+
+    @Modifying
+    @Query("delete from PhoneVerification v where v.lastSentAt < :cutoff")
+    fun deleteStale(@Param("cutoff") cutoff: LocalDateTime): Int
 }

@@ -7,6 +7,7 @@ import com.mindbridge.wishmap.context.identity.infrastructure.SmsSender
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.annotation.Propagation
 import java.security.MessageDigest
@@ -79,5 +80,12 @@ class PhoneCodeService(
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec(codeSecret.toByteArray(Charsets.UTF_8), "HmacSHA256"))
         return HexFormat.of().formatHex(mac.doFinal("$phone:$code".toByteArray(Charsets.UTF_8)))
+    }
+
+    @Scheduled(cron = "0 0 3 * * *", zone = "UTC")
+    @Transactional
+    fun purgeStale() {
+        verifications.deleteStale(LocalDateTime.now(ZoneOffset.UTC).minusDays(1))
+        jdbc.update("DELETE FROM sms_daily_quota WHERE day < CURRENT_DATE - INTERVAL '30 days'")
     }
 }
