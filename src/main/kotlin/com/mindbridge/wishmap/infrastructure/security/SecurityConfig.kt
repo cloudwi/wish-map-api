@@ -30,7 +30,7 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     // 인증 (DELETE /auth/me는 인증 필요하므로 제외)
-                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/phone/request", "/api/v1/auth/phone/verify", "/api/v1/auth/refresh").permitAll()
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/**").authenticated()
 
                     // 공개 조회 API

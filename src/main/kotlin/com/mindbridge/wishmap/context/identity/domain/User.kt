@@ -9,6 +9,9 @@ class User(
     @Column(nullable = false, unique = true)
     var nickname: String,
 
+    @Column(length = 11, unique = true)
+    var phone: String? = null,
+
     var profileImage: String? = null,
 
     @Column(name = "push_token")
@@ -16,23 +19,8 @@ class User(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: UserRole = UserRole.USER,
-
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val socialAccounts: MutableList<SocialAccount> = mutableListOf()
-) : BaseTimeEntity() {
-
-    fun addSocialAccount(socialAccount: SocialAccount) {
-        socialAccounts.add(socialAccount)
-    }
-
-    val primaryEmail: String?
-        get() = socialAccounts.firstOrNull()?.email
-}
-
-enum class AuthProvider {
-    KAKAO, GOOGLE, NAVER, APPLE
-}
+    var role: UserRole = UserRole.USER
+) : BaseTimeEntity()
 
 enum class UserRole {
     USER, ADMIN

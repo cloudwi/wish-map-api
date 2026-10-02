@@ -1,32 +1,24 @@
 package com.mindbridge.wishmap.context.identity.application
 
-import com.mindbridge.wishmap.context.identity.api.dto.*
-import com.mindbridge.wishmap.context.identity.infrastructure.OAuthService
-
-import com.mindbridge.wishmap.context.identity.domain.AuthProvider
-import com.mindbridge.wishmap.context.identity.domain.NicknameGenerator
-import com.mindbridge.wishmap.context.identity.domain.SocialAccount
-import com.mindbridge.wishmap.context.identity.domain.User
 import com.mindbridge.wishmap.common.error.DuplicateResourceException
 import com.mindbridge.wishmap.common.error.ResourceNotFoundException
-import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
-import com.mindbridge.wishmap.context.notification.domain.NotificationRepository
-import com.mindbridge.wishmap.context.moderation.domain.ReportRepository
-import com.mindbridge.wishmap.context.identity.domain.SocialAccountRepository
-import com.mindbridge.wishmap.context.moderation.domain.UserAgreementRepository
+import com.mindbridge.wishmap.context.identity.api.dto.*
+import com.mindbridge.wishmap.context.identity.domain.NicknameGenerator
+import com.mindbridge.wishmap.context.identity.domain.User
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
+import com.mindbridge.wishmap.context.moderation.domain.BlockedUserRepository
+import com.mindbridge.wishmap.context.moderation.domain.ReportRepository
+import com.mindbridge.wishmap.context.moderation.domain.UserAgreementRepository
+import com.mindbridge.wishmap.context.notification.domain.NotificationRepository
 import com.mindbridge.wishmap.infrastructure.security.JwtTokenProvider
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
-    private val socialAccountRepository: SocialAccountRepository,
-    private val oAuthService: OAuthService,
+    private val phoneCodes: PhoneCodeService,
     private val jwtTokenProvider: JwtTokenProvider,
     private val notificationRepository: NotificationRepository,
     private val reportRepository: ReportRepository,
@@ -34,148 +26,63 @@ class AuthService(
     private val userAgreementRepository: UserAgreementRepository,
     @Value("\${jwt.access-token-expiration}") private val accessTokenExpiration: Long
 ) {
-
-    private val log = LoggerFactory.getLogger(AuthService::class.java)
+    fun requestCode(phone: String) = phoneCodes.request(phone)
 
     @Transactional
-    fun socialLogin(provider: AuthProvider, request: SocialLoginRequest): TokenResponse {
-        val oAuthUserInfo = oAuthService.verifyTokenAndGetUserInfo(provider, request.accessToken)
-
-        val socialAccount = socialAccountRepository
-            .findByProviderAndProviderId(provider, oAuthUserInfo.providerId)
-
-        val user = if (socialAccount.isPresent) {
-            log.info("로그인: provider={}, userId={}", provider, socialAccount.get().user.id)
-            socialAccount.get().user
-        } else {
-            try {
-                // 신규 사용자 생성 + 소셜 계정 연결
-                val nickname = generateUniqueNickname()
-                val newUser = User(
-                    nickname = nickname,
-                    profileImage = oAuthUserInfo.profileImage
-                )
-                userRepository.save(newUser)
-
-                val newSocialAccount = SocialAccount(
-                    user = newUser,
-                    provider = provider,
-                    providerId = oAuthUserInfo.providerId,
-                    email = oAuthUserInfo.email
-                )
-                socialAccountRepository.save(newSocialAccount)
-                newUser.addSocialAccount(newSocialAccount)
-
-                log.info("회원가입: provider={}, userId={}, nickname={}", provider, newUser.id, newUser.nickname)
-                newUser
-            } catch (e: DataIntegrityViolationException) {
-                // 동시 요청으로 이미 생성된 경우 기존 계정으로 로그인
-                socialAccountRepository
-                    .findByProviderAndProviderId(provider, oAuthUserInfo.providerId)
-                    .orElseThrow { e }
-                    .user
-            }
-        }
-
+    fun phoneLogin(phoneInput: String, code: String): TokenResponse {
+        val phone = phoneCodes.normalize(phoneInput)
+        require(phoneCodes.consume(phone, code)) { "인증번호가 올바르지 않거나 만료되었습니다." }
+        val user = userRepository.findByPhone(phone) ?: userRepository.save(User(generateUniqueNickname(), phone = phone))
         return generateTokenResponse(user)
     }
 
     @Transactional(readOnly = true)
     fun refreshToken(request: RefreshTokenRequest): TokenResponse {
-        if (!jwtTokenProvider.validateToken(request.refreshToken)) {
-            throw IllegalArgumentException("Invalid refresh token")
-        }
-
+        require(jwtTokenProvider.validateRefreshToken(request.refreshToken)) { "유효하지 않은 로그인 정보입니다." }
         val userId = jwtTokenProvider.getUserIdFromToken(request.refreshToken)
-        val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found") }
-
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
+        require(user.phone != null) { "휴대폰 인증이 필요합니다." }
         return generateTokenResponse(user)
     }
 
     @Transactional
     fun deleteAccount(userId: Long) {
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        // Apple 토큰 해지 시도
-        user.socialAccounts
-            .filter { it.provider == AuthProvider.APPLE && it.refreshToken != null }
-            .forEach { account ->
-                try {
-                    oAuthService.revokeAppleToken(account.refreshToken!!)
-                } catch (e: Exception) {
-                    log.warn("Apple 토큰 해지 실패 (userId={}): {}", userId, e.message)
-                }
-            }
-
-        // 알림 삭제
+        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("사용자를 찾을 수 없습니다.") }
         notificationRepository.deleteAllByUserId(userId)
-
-        // 신고/차단/동의 데이터 삭제
         reportRepository.deleteAllByReporterId(userId)
         blockedUserRepository.deleteAllByBlockerIdOrBlockedId(userId, userId)
         userAgreementRepository.deleteAllByUserId(userId)
-
-        // 사용자 삭제 (socialAccounts는 cascade로 함께 삭제)
         userRepository.delete(user)
-
-        log.info("계정 삭제 완료: userId={}", userId)
     }
 
-    private fun generateTokenResponse(user: User): TokenResponse {
-        val accessToken = jwtTokenProvider.generateAccessToken(user.id)
-        val refreshToken = jwtTokenProvider.generateRefreshToken(user.id)
-
-        return TokenResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            expiresIn = accessTokenExpiration / 1000,
-            user = UserResponse(
-                id = user.id,
-                nickname = user.nickname,
-                profileImage = user.profileImage,
-                role = user.role.name
-            )
-        )
-    }
+    private fun generateTokenResponse(user: User) = TokenResponse(
+        accessToken = jwtTokenProvider.generateAccessToken(user.id),
+        refreshToken = jwtTokenProvider.generateRefreshToken(user.id),
+        expiresIn = accessTokenExpiration / 1000,
+        user = UserResponse(user.id, user.nickname, user.profileImage, user.role.name)
+    )
 
     @Transactional
     fun updateNickname(userId: Long, newNickname: String): UserResponse {
-        log.info("닉네임 변경 요청: userId={}, newNickname={}", userId, newNickname)
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
-
-        if (user.nickname == newNickname) {
-            return UserResponse(id = user.id, nickname = user.nickname, profileImage = user.profileImage, role = user.role.name)
+        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("사용자를 찾을 수 없습니다.") }
+        if (user.nickname != newNickname) {
+            if (userRepository.existsByNickname(newNickname)) throw DuplicateResourceException("이미 사용 중인 닉네임입니다")
+            user.nickname = newNickname
         }
-
-        if (userRepository.existsByNickname(newNickname)) {
-            throw DuplicateResourceException("이미 사용 중인 닉네임입니다")
-        }
-
-        user.nickname = newNickname
-        userRepository.save(user)
-
-        return UserResponse(id = user.id, nickname = user.nickname, profileImage = user.profileImage, role = user.role.name)
+        return UserResponse(user.id, user.nickname, user.profileImage, user.role.name)
     }
 
     @Transactional
     fun updatePushToken(userId: Long, pushToken: String) {
-        val user = userRepository.findById(userId)
-            .orElseThrow { ResourceNotFoundException("User not found: $userId") }
+        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("사용자를 찾을 수 없습니다.") }
         user.pushToken = pushToken
-        userRepository.save(user)
     }
 
     private fun generateUniqueNickname(): String {
         repeat(10) {
             val nickname = NicknameGenerator.generate()
-            if (!userRepository.existsByNickname(nickname)) {
-                return nickname
-            }
+            if (!userRepository.existsByNickname(nickname)) return nickname
         }
-        // 충돌이 계속되면 타임스탬프 추가
         return "${NicknameGenerator.generate()}${System.currentTimeMillis() % 10000}"
     }
 }

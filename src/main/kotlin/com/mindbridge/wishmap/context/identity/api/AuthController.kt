@@ -2,7 +2,6 @@ package com.mindbridge.wishmap.context.identity.api
 
 import com.mindbridge.wishmap.context.identity.api.dto.*
 
-import com.mindbridge.wishmap.context.identity.domain.AuthProvider
 import com.mindbridge.wishmap.infrastructure.security.UserPrincipal
 import com.mindbridge.wishmap.context.identity.application.AuthService
 import jakarta.validation.Valid
@@ -16,20 +15,15 @@ class AuthController(
     private val authService: AuthService
 ) {
 
-    @PostMapping("/{provider}")
-    fun socialLogin(
-        @PathVariable provider: String,
-        @Valid @RequestBody request: SocialLoginRequest
-    ): ResponseEntity<TokenResponse> {
-        val authProvider = try {
-            AuthProvider.valueOf(provider.uppercase())
-        } catch (e: IllegalArgumentException) {
-            return ResponseEntity.badRequest().build()
-        }
-
-        val response = authService.socialLogin(authProvider, request)
-        return ResponseEntity.ok(response)
+    @PostMapping("/phone/request")
+    fun requestCode(@Valid @RequestBody request: RequestPhoneCodeRequest): ResponseEntity<Void> {
+        authService.requestCode(request.phone)
+        return ResponseEntity.noContent().build()
     }
+
+    @PostMapping("/phone/verify")
+    fun verifyCode(@Valid @RequestBody request: VerifyPhoneCodeRequest): TokenResponse =
+        authService.phoneLogin(request.phone, request.code)
 
     @PostMapping("/refresh")
     fun refreshToken(

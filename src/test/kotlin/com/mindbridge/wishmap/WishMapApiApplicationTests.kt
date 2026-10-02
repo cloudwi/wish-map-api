@@ -16,15 +16,15 @@ class WishMapApiApplicationTests : IntegrationTest() {
     }
 
     @Test
-    fun legacyTablesAreRemovedButSharedDataRemains() {
+    fun legacyTablesAreRemovedAndPhoneLoginTablesExist() {
         listOf(
             "lunch_votes", "lunch_vote_candidates", "lunch_vote_selections",
             "friends", "groups", "group_members", "visits", "comments",
-            "comment_tags", "comment_images", "place_categories", "trend_tags", "places", "restaurant_images"
+            "comment_tags", "comment_images", "place_categories", "trend_tags", "places", "restaurant_images", "social_accounts"
         ).forEach { table ->
             assertNull(jdbcTemplate.queryForObject("SELECT to_regclass('public.$table')::text", String::class.java))
         }
-        listOf("users", "social_accounts", "parties", "party_members", "notifications", "reports", "blocked_users")
+        listOf("users", "phone_verifications", "parties", "party_members", "notifications", "reports", "blocked_users")
             .forEach { table ->
                 assertNotNull(jdbcTemplate.queryForObject("SELECT to_regclass('public.$table')::text", String::class.java))
             }

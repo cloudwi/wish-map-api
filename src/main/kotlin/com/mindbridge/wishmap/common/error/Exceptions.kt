@@ -9,3 +9,5 @@ class UnauthorizedException(message: String) : BusinessException(message)
 class ForbiddenException(message: String) : BusinessException(message)
 
 class DuplicateResourceException(message: String) : BusinessException(message)
+
+class ServiceUnavailableException(message: String) : BusinessException(message)

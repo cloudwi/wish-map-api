@@ -3,12 +3,9 @@ package com.mindbridge.wishmap.context.identity.api.dto
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
-data class SocialLoginRequest(
-    @field:NotBlank(message = "Access token is required")
-    val accessToken: String,
+data class RequestPhoneCodeRequest(@field:NotBlank val phone: String)
 
-    val nickname: String? = null // Apple 첫 로그인 시 이름 전달용
-)
+data class VerifyPhoneCodeRequest(@field:NotBlank val phone: String, @field:NotBlank val code: String)
 
 data class RefreshTokenRequest(
     @field:NotBlank(message = "Refresh token is required")

@@ -77,6 +77,11 @@ class GlobalExceptionHandler {
             ))
     }
 
+    @ExceptionHandler(ServiceUnavailableException::class)
+    fun handleServiceUnavailable(e: ServiceUnavailableException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(ErrorResponse(code = "SERVICE_UNAVAILABLE", message = e.message ?: "잠시 후 다시 시도해주세요."))
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
         val errors = e.bindingResult.allErrors.associate { error ->

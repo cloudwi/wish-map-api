@@ -23,19 +23,20 @@ class JwtTokenProvider(
     }
 
     fun generateAccessToken(userId: Long): String {
-        return generateToken(userId, accessTokenExpiration)
+        return generateToken(userId, accessTokenExpiration, "access")
     }
 
     fun generateRefreshToken(userId: Long): String {
-        return generateToken(userId, refreshTokenExpiration)
+        return generateToken(userId, refreshTokenExpiration, "refresh")
     }
 
-    private fun generateToken(userId: Long, expiration: Long): String {
+    private fun generateToken(userId: Long, expiration: Long, type: String): String {
         val now = Date()
         val expiryDate = Date(now.time + expiration)
 
         return Jwts.builder()
             .subject(userId.toString())
+            .claim("type", type)
             .issuedAt(now)
             .expiration(expiryDate)
             .signWith(key)
@@ -52,13 +53,16 @@ class JwtTokenProvider(
         return claims.subject.toLong()
     }
 
-    fun validateToken(token: String): Boolean {
+    fun validateAccessToken(token: String): Boolean = validateToken(token, "access")
+
+    fun validateRefreshToken(token: String): Boolean = validateToken(token, "refresh")
+
+    private fun validateToken(token: String, type: String): Boolean {
         return try {
             Jwts.parser()
                 .verifyWith(key)
                 .build()
-                .parseSignedClaims(token)
-            true
+                .parseSignedClaims(token).payload.get("type", String::class.java) == type
         } catch (e: JwtException) {
             false
         } catch (e: IllegalArgumentException) {
