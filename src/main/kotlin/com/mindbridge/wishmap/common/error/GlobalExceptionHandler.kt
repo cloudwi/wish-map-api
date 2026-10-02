@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -100,6 +101,16 @@ class GlobalExceptionHandler {
             .body(ErrorResponse(
                 code = "DATA_ERROR",
                 message = "데이터 저장에 실패했습니다. 잠시 후 다시 시도해주세요."
+            ))
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFound(e: NoResourceFoundException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ErrorResponse(
+                code = "NOT_FOUND",
+                message = "요청한 경로를 찾을 수 없습니다."
             ))
     }
 

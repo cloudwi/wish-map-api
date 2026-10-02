@@ -7,7 +7,6 @@ import com.mindbridge.wishmap.context.notification.domain.NotificationType
 import com.mindbridge.wishmap.context.notification.infrastructure.PushNotificationService
 import com.mindbridge.wishmap.common.error.ForbiddenException
 import com.mindbridge.wishmap.common.error.ResourceNotFoundException
-import com.mindbridge.wishmap.context.social.domain.GroupMemberRepository
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -20,7 +19,6 @@ import java.time.LocalDateTime
 class NotificationService(
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
-    private val groupMemberRepository: GroupMemberRepository,
     private val pushNotificationService: PushNotificationService
 ) {
 
@@ -84,21 +82,6 @@ class NotificationService(
             )
         )
         pushNotificationService.sendPush(userId, title, message, data = referenceId?.let { mapOf("referenceId" to it.toString(), "type" to type.name) })
-    }
-
-    @Transactional
-    fun notifyGroupMembers(
-        groupId: Long,
-        excludeUserId: Long,
-        type: NotificationType,
-        title: String,
-        message: String
-    ) {
-        val memberUserIds = groupMemberRepository.findAcceptedUserIdsByGroupId(groupId)
-        val targetUserIds = memberUserIds.filter { it != excludeUserId }
-        targetUserIds.forEach { userId ->
-            createNotification(userId, type, title, message, referenceId = groupId)
-        }
     }
 
     private fun Notification.toResponse() = NotificationResponse(

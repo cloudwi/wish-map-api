@@ -5,6 +5,7 @@ import com.mindbridge.wishmap.context.moderation.domain.*
 import com.mindbridge.wishmap.common.error.DuplicateResourceException
 import com.mindbridge.wishmap.common.error.ResourceNotFoundException
 import com.mindbridge.wishmap.context.identity.domain.UserRepository
+import com.mindbridge.wishmap.context.party.domain.PartyRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -13,7 +14,8 @@ class ModerationService(
     private val reportRepository: ReportRepository,
     private val blockedUserRepository: BlockedUserRepository,
     private val userAgreementRepository: UserAgreementRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val partyRepository: PartyRepository
 ) {
 
     private val log = org.slf4j.LoggerFactory.getLogger(ModerationService::class.java)
@@ -22,6 +24,12 @@ class ModerationService(
     fun createReport(userId: Long, request: CreateReportRequest): ReportResponse {
         val reporter = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User not found") }
+        if (request.targetType == ReportTargetType.PARTY && !partyRepository.existsById(request.targetId)) {
+            throw ResourceNotFoundException("파티를 찾을 수 없습니다")
+        }
+        if (request.targetType == ReportTargetType.USER && !userRepository.existsById(request.targetId)) {
+            throw ResourceNotFoundException("사용자를 찾을 수 없습니다")
+        }
 
         if (reportRepository.existsByReporterIdAndTargetTypeAndTargetId(userId, request.targetType, request.targetId)) {
             throw DuplicateResourceException("이미 신고한 콘텐츠입니다")

@@ -36,7 +36,7 @@ class Report(
 ) : BaseTimeEntity()
 
 enum class ReportTargetType {
-    COMMENT, RESTAURANT
+    PARTY, USER
 }
 
 enum class ReportReason {

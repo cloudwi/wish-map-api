@@ -1,7 +1,5 @@
 package com.mindbridge.wishmap.context.place.api
 
-import com.mindbridge.wishmap.context.place.api.dto.*
-
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -59,43 +57,6 @@ class SearchController(
         }
 
         return ResponseEntity.ok(result)
-    }
-
-    @GetMapping("/images")
-    fun searchImages(
-        @RequestParam query: String,
-        @RequestParam(defaultValue = "1") display: Int
-    ): ResponseEntity<Any> {
-        if (clientId.isBlank()) {
-            return ResponseEntity.status(503).body(mapOf("error" to "Search service is not available"))
-        }
-
-        val clampedDisplay = display.coerceIn(1, 5)
-
-        return try {
-            val result = webClient.get()
-                .uri { uriBuilder ->
-                    uriBuilder
-                        .scheme("https")
-                        .host("openapi.naver.com")
-                        .path("/v1/search/image")
-                        .queryParam("query", query)
-                        .queryParam("display", clampedDisplay)
-                        .queryParam("sort", "sim")
-                        .build()
-                }
-                .header("X-Naver-Client-Id", clientId)
-                .header("X-Naver-Client-Secret", clientSecret)
-                .retrieve()
-                .bodyToMono(Map::class.java)
-                .timeout(Duration.ofSeconds(5))
-                .block()
-
-            ResponseEntity.ok(result)
-        } catch (e: Exception) {
-            logger.warn("Naver image search timeout/error: {}", e.message)
-            ResponseEntity.ok(mapOf("items" to emptyList<Any>()))
-        }
     }
 
 }
