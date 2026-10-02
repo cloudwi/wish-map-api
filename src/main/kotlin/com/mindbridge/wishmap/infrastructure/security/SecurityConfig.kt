@@ -36,6 +36,7 @@ class SecurityConfig(
                     // 공개 조회 API
                     .requestMatchers(HttpMethod.GET, "/api/v1/parties", "/api/v1/parties/{id}").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/privacy.html", "/account-deletion.html").permitAll()
 
                     // 인프라 / 개발 도구
                     .requestMatchers("/h2-console/**").permitAll()

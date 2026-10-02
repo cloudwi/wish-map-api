@@ -21,6 +21,7 @@ Spring Boot 4, Kotlin, PostgreSQL, Flyway 기반의 장소별 파티 모집 API.
 - `POST /api/v1/parties/{id}/members/{memberId}/approve|reject`
 - `POST /api/v1/parties/{id}/withdraw|cancel`
 - `GET /api/v1/search/places`: 네이버 지역 검색 프록시
+- `GET /privacy.html`, `GET /account-deletion.html`: 스토어용 공개 안내문
 
 ## 데이터와 배포
 
